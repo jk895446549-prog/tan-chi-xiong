@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>贪吃熊</title>
+<style>
+  body { background:#222; color:white; text-align:center; font-family:sans-serif; }
+  canvas { background:#111; margin-top:20px; }
+</style>
+</head>
+<body>
+<h2>贪吃熊 分数：<span id="score">0</span></h2>
+<canvas id="game" width="400" height="400"></canvas>
+<p>方向键控制，空格重开</p>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const scoreEl = document.getElementById("score");
+
+const size = 40;
+const count = canvas.width / size;
+const speed = 180;
+
+const headImg = new Image();
+const headEatImg = new Image();
+const bodyImg = new Image();
+const bgImg = new Image();
+
+headImg.src = "head.png";
+headEatImg.src = "head_eat.png";
+bodyImg.src = "body.png";
+bgImg.src = "background.jpg";
+
+const eatSound = new Audio("eat.mp3");
+const gameOverSound = new Audio("gameover.mp3");
+
+let snake, food, dir, nextDir, score, gameOver;
+
+let eatingStartTime = 0;
+const eatingDuration = 200;
+let pulseTime = 0;
+
+function reset() {
+  snake = [{x:5, y:5}];
+  dir = {x:1, y:0};
+  nextDir = dir;
+  score = 0;
+  gameOver = false;
+  eatingStartTime = 0;
+  scoreEl.textContent = score;
+  makeFood();
+}
+
+function makeFood() {
+  food = {
+    x: Math.floor(Math.random() * count),
+    y: Math.floor(Math.random() * count)
+  };
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp" && dir.y !== 1) nextDir = {x:0, y:-1};
+  if (e.key === "ArrowDown" && dir.y !== -1) nextDir = {x:0, y:1};
+  if (e.key === "ArrowLeft" && dir.x !== 1) nextDir = {x:-1, y:0};
+  if (e.key === "ArrowRight" && dir.x !== -1) nextDir = {x:1, y:0};
+  if (e.code === "Space" && gameOver) reset();
+});
+
+function drawCircleImage(img, x, y, drawSize = size) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(
+    x + drawSize / 2,
+    y + drawSize / 2,
+    drawSize / 2,
+    0,
+    Math.PI * 2
+  );
+  ctx.clip();
+  ctx.drawImage(img, x, y, drawSize, drawSize);
+  ctx.restore();
+}
+
+function playSound(sound) {
+  sound.currentTime = 0;
+  sound.play();
+}
+
+function loop() {
+  if (gameOver) {
+    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.font = "32px sans-serif";
+    ctx.fillText("Game Over", 110, 200);
+    return;
+  }
+
+  dir = nextDir;
+
+  const head = {
+    x: snake[0].x + dir.x,
+    y: snake[0].y + dir.y
+  };
+
+  if (head.x < 0) head.x = count - 1;
+  if (head.x >= count) head.x = 0;
+  if (head.y < 0) head.y = count - 1;
+  if (head.y >= count) head.y = 0;
+
+  if (snake.some(p => p.x === head.x && p.y === head.y)) {
+    gameOver = true;
+    playSound(gameOverSound);
+    return;
+  }
+
+  snake.unshift(head);
+
+  if (head.x === food.x && head.y === food.y) {
+    score++;
+    scoreEl.textContent = score;
+
+    eatingStartTime = Date.now();
+    playSound(eatSound);
+
+    makeFood();
+  } else {
+    snake.pop();
+  }
+
+  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const foodX = food.x * size;
+const foodY = food.y * size;
+
+// 呼吸效果
+const pulse = Math.sin(pulseTime) * 6;
+
+ctx.save();
+
+ctx.shadowColor = "#FFD700";
+ctx.shadowBlur = 15;
+
+ctx.beginPath();
+ctx.arc(
+  foodX + size / 2,
+  foodY + size / 2,
+  size / 2 + pulse,
+  0,
+  Math.PI * 2
+);
+
+ctx.strokeStyle = "white";
+ctx.lineWidth = 4;
+ctx.stroke();
+
+ctx.restore();
+
+// 画食物头像
+drawCircleImage(bodyImg, foodX, foodY);
+
+  snake.forEach((p, index) => {
+    const x = p.x * size;
+    const y = p.y * size;
+
+    if (index === 0) {
+      const elapsed = Date.now() - eatingStartTime;
+      const isEating = elapsed < eatingDuration;
+
+      if (isEating) {
+        const progress = elapsed / eatingDuration;
+        const wave = Math.sin(progress * Math.PI);
+
+        const scale = 0.95 + wave * 1.1;
+        const drawSize = size * scale;
+        const offset = (size - drawSize) / 2;
+
+        drawCircleImage(
+          headEatImg,
+          x + offset,
+          y + offset,
+          drawSize
+        );
+      } else {
+        drawCircleImage(headImg, x, y, size);
+      }
+    } else {
+      drawCircleImage(bodyImg, x, y, size);
+    }
+
+  });
+pulseTime += 0.15;
+}
+
+Promise.all([
+  new Promise(resolve => headImg.onload = resolve),
+  new Promise(resolve => headEatImg.onload = resolve),
+  new Promise(resolve => bodyImg.onload = resolve),
+  new Promise(resolve => bgImg.onload = resolve)
+]).then(() => {
+  reset();
+  setInterval(loop, speed);
+});
+</script>
+</body>
+</html>
