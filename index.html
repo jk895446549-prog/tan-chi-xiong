@@ -2,10 +2,42 @@
 <html>
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>贪吃熊</title>
 <style>
-  body { background:#222; color:white; text-align:center; font-family:sans-serif; }
-  canvas { background:#111; margin-top:20px; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #222;
+    color: white;
+    text-align: center;
+    font-family: sans-serif;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  h2 {
+    margin: 10px 0 6px;
+    font-size: clamp(18px, 5vw, 28px);
+  }
+
+  p {
+    margin: 6px 0;
+    font-size: clamp(12px, 3.5vw, 16px);
+  }
+
+  canvas {
+    background: #111;
+    display: block;
+    margin: 8px auto 0;
+
+    /* 手机、平板、电脑自动适配 */
+    width: min(92vw, 78vh, 600px);
+    height: min(92vw, 78vh, 600px);
+
+    /* 防止手指滑动时页面滚动 */
+    touch-action: none;
+  }
 </style>
 </head>
 <body>
