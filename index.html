@@ -1,331 +1,366 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>贪吃熊</title>
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: #222;
-    color: white;
-    text-align: center;
-    font-family: sans-serif;
-    overflow: hidden;
-    touch-action: none;
-  }
-
-  h2 {
-    margin: 10px 0 6px;
-    font-size: clamp(18px, 5vw, 28px);
-  }
-
-  p {
-    margin: 6px 0;
-    font-size: clamp(12px, 3.5vw, 16px);
-  }
-
-  canvas {
-    background: #111;
-    display: block;
-    margin: 8px auto 0;
-
-    /* 手机、平板、电脑自动适配 */
-    width: min(92vw, 78vh, 600px);
-    height: min(92vw, 78vh, 600px);
-
-    /* 防止手指滑动时页面滚动 */
-    touch-action: none;
-  }
-</style>
-</head>
-<body>
-<h2>贪吃熊 分数：<span id="score">0</span></h2>
-<canvas id="game" width="400" height="400"></canvas>
-<p>方向键控制，空格重开</p>
-
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const scoreEl = document.getElementById("score");
-
-// ==================== 常用调试参数 ====================
-
-// 每个格子的大小，也是头像基础尺寸
-// 数值越大，头像越大，棋盘格子越少
-const size = 40;
-
-// 游戏速度，单位毫秒
-// 数值越小越快，越大越慢
-const speed = 180;
-
-// 吃到食物后，张嘴动画持续时间
-// 推荐 150~300
-const eatingDuration = 200;
-
-// 背景黑色遮罩透明度
-// 0.2 更亮，0.5 更暗
-const bgMask = 0.35;
-
-// 食物呼吸动画幅度
-// 数值越大，外圈跳动越明显
-const foodPulseSize = 6;
-
-// 食物呼吸动画速度
-// 数值越大，呼吸越快
-const foodPulseSpeed = 0.15;
-
-// 食物发光强度
-const foodGlow = 15;
-
-// 食物描边粗细
-const foodStrokeWidth = 4;
-
-// 张嘴头像最小缩放
-const eatHeadMinScale = 0.95;
-
-// 张嘴头像最大额外放大
-// 实际最大大小 = eatHeadMinScale + eatHeadScaleRange
-const eatHeadScaleRange = 1.1;
-
-// ======================================================
-
-const count = canvas.width / size;
-
-const headImg = new Image();
-const headEatImg = new Image();
-const bodyImg = new Image();
-const bgImg = new Image();
-
-headImg.src = "head.png";
-headEatImg.src = "head_eat.png";
-bodyImg.src = "body.png";
-bgImg.src = "background.jpg";
-
-const eatSound = new Audio("eat.mp3");
-const gameOverSound = new Audio("gameover.mp3");
-
-let snake, food, dir, nextDir, score, gameOver;
-let eatingStartTime = 0;
-let pulseTime = 0;
-
-function reset() {
-  snake = [{x:5, y:5}];
-  dir = {x:1, y:0};
-  nextDir = dir;
-  score = 0;
-  gameOver = false;
-  eatingStartTime = 0;
-  scoreEl.textContent = score;
-  makeFood();
-}
-
-function makeFood() {
-  food = {
-    x: Math.floor(Math.random() * count),
-    y: Math.floor(Math.random() * count)
-  };
-}
-
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowUp" && dir.y !== 1) nextDir = {x:0, y:-1};
-  if (e.key === "ArrowDown" && dir.y !== -1) nextDir = {x:0, y:1};
-  if (e.key === "ArrowLeft" && dir.x !== 1) nextDir = {x:-1, y:0};
-  if (e.key === "ArrowRight" && dir.x !== -1) nextDir = {x:1, y:0};
-  if (e.code === "Space" && gameOver) reset();
-});
-
-// ==================== 手机滑动控制 ====================
-
-let touchStartX = 0;
-let touchStartY = 0;
-
-canvas.addEventListener("touchstart", e => {
-  e.preventDefault();
-
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
-}, { passive: false });
-
-canvas.addEventListener("touchmove", e => {
-  e.preventDefault();
-}, { passive: false });
-
-canvas.addEventListener("touchend", e => {
-  e.preventDefault();
-
-  const touchEndX = e.changedTouches[0].clientX;
-  const touchEndY = e.changedTouches[0].clientY;
-
-  const dx = touchEndX - touchStartX;
-  const dy = touchEndY - touchStartY;
-
-  // 滑动距离太短就不触发，避免误触
-  const minSwipeDistance = 30;
-
-  if (Math.abs(dx) < minSwipeDistance && Math.abs(dy) < minSwipeDistance) {
-    return;
-  }
-
-  // 横向滑动
-  if (Math.abs(dx) > Math.abs(dy)) {
-    if (dx > 0 && dir.x !== -1) {
-      nextDir = {x:1, y:0}; // 右滑
-    } else if (dx < 0 && dir.x !== 1) {
-      nextDir = {x:-1, y:0}; // 左滑
-    }
-  }
-
-  // 纵向滑动
-  else {
-    if (dy > 0 && dir.y !== -1) {
-      nextDir = {x:0, y:1}; // 下滑
-    } else if (dy < 0 && dir.y !== 1) {
-      nextDir = {x:0, y:-1}; // 上滑
-    }
-  }
-}, { passive: false });
-
-function drawCircleImage(img, x, y, drawSize = size) {
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(
-    x + drawSize / 2,
-    y + drawSize / 2,
-    drawSize / 2,
-    0,
-    Math.PI * 2
-  );
-  ctx.clip();
-  ctx.drawImage(img, x, y, drawSize, drawSize);
-  ctx.restore();
-}
-
-function playSound(sound) {
-  sound.currentTime = 0;
-  sound.play();
-}
-
-function drawBackground() {
-  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = `rgba(0,0,0,${bgMask})`;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
-function loop() {
-  if (gameOver) {
-    drawBackground();
-
-    ctx.fillStyle = "white";
-    ctx.font = "32px sans-serif";
-    ctx.fillText("Game Over", 110, 200);
-    return;
-  }
-
-  dir = nextDir;
-
-  const head = {
-    x: snake[0].x + dir.x,
-    y: snake[0].y + dir.y
-  };
-
-  // 穿墙逻辑：撞墙不死，从对面出来
-  if (head.x < 0) head.x = count - 1;
-  if (head.x >= count) head.x = 0;
-  if (head.y < 0) head.y = count - 1;
-  if (head.y >= count) head.y = 0;
-
-  // 撞到自己死亡
-  if (snake.some(p => p.x === head.x && p.y === head.y)) {
-    gameOver = true;
-    playSound(gameOverSound);
-    return;
-  }
-
-  snake.unshift(head);
-
-  // 吃到食物
-  if (head.x === food.x && head.y === food.y) {
-    score++;
-    scoreEl.textContent = score;
-
-    eatingStartTime = Date.now();
-    playSound(eatSound);
-
-    makeFood();
-  } else {
-    snake.pop();
-  }
-
-  drawBackground();
-
-  // ==================== 食物绘制 ====================
-
-  const foodX = food.x * size;
-  const foodY = food.y * size;
-
-  const pulse = Math.sin(pulseTime) * foodPulseSize;
-
-  ctx.save();
-  ctx.shadowColor = "#FFD700";
-  ctx.shadowBlur = foodGlow;
-
-  ctx.beginPath();
-  ctx.arc(
-    foodX + size / 2,
-    foodY + size / 2,
-    size / 2 + pulse,
-    0,
-    Math.PI * 2
-  );
-
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = foodStrokeWidth;
-  ctx.stroke();
-  ctx.restore();
-
-  drawCircleImage(bodyImg, foodX, foodY);
-
-  // ==================== 蛇绘制 ====================
-
-  snake.forEach((p, index) => {
-    const x = p.x * size;
-    const y = p.y * size;
-
-    if (index === 0) {
-      const elapsed = Date.now() - eatingStartTime;
-      const isEating = elapsed < eatingDuration;
-
-      if (isEating) {
-        const progress = elapsed / eatingDuration;
-        const wave = Math.sin(progress * Math.PI);
-
-        const scale = eatHeadMinScale + wave * eatHeadScaleRange;
-        const drawSize = size * scale;
-        const offset = (size - drawSize) / 2;
-
-        drawCircleImage(headEatImg, x + offset, y + offset, drawSize);
-      } else {
-        drawCircleImage(headImg, x, y, size);
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>贪吃熊</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #222;
+        color: white;
+        text-align: center;
+        font-family: sans-serif;
+        overflow: hidden;
+        touch-action: none;
       }
-    } else {
-      drawCircleImage(bodyImg, x, y, size);
-    }
-  });
 
-  pulseTime += foodPulseSpeed;
-}
+      h2 {
+        margin: 10px 0 6px;
+        font-size: clamp(18px, 5vw, 28px);
+      }
 
-Promise.all([
-  new Promise(resolve => headImg.onload = resolve),
-  new Promise(resolve => headEatImg.onload = resolve),
-  new Promise(resolve => bodyImg.onload = resolve),
-  new Promise(resolve => bgImg.onload = resolve)
-]).then(() => {
-  reset();
-  setInterval(loop, speed);
-});
-</script>
-</body>
+      p {
+        margin: 6px 0;
+        font-size: clamp(12px, 3.5vw, 16px);
+      }
+
+      canvas {
+        background: #111;
+        display: block;
+        margin: 8px auto 0;
+
+        /* 手机、平板、电脑自动适配 */
+        width: min(92vw, 78vh, 600px);
+        height: min(92vw, 78vh, 600px);
+
+        /* 防止手指滑动时页面滚动 */
+        touch-action: none;
+      }
+      #restartBtn {
+        display: none;
+        margin-top: 10px;
+        padding: 12px 24px;
+        font-size: 18px;
+        border: none;
+        border-radius: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>贪吃熊 分数：<span id="score">0</span></h2>
+    <canvas id="game" width="400" height="400"></canvas>
+    <p>方向键，滑动屏幕控制，空格重开</p>
+    <button id="restartBtn">重新开始</button>
+
+    <script>
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = document.getElementById("score");
+      const restartBtn = document.getElementById("restartBtn");
+
+      // ==================== 常用调试参数 ====================
+
+      // 每个格子的大小，也是头像基础尺寸
+      // 数值越大，头像越大，棋盘格子越少
+      const size = 40;
+
+      // 游戏速度，单位毫秒
+      // 数值越小越快，越大越慢
+      const speed = 180;
+
+      // 吃到食物后，张嘴动画持续时间
+      // 推荐 150~300
+      const eatingDuration = 200;
+
+      // 背景黑色遮罩透明度
+      // 0.2 更亮，0.5 更暗
+      const bgMask = 0.35;
+
+      // 食物呼吸动画幅度
+      // 数值越大，外圈跳动越明显
+      const foodPulseSize = 6;
+
+      // 食物呼吸动画速度
+      // 数值越大，呼吸越快
+      const foodPulseSpeed = 0.15;
+
+      // 食物发光强度
+      const foodGlow = 15;
+
+      // 食物描边粗细
+      const foodStrokeWidth = 4;
+
+      // 张嘴头像最小缩放
+      const eatHeadMinScale = 0.95;
+
+      // 张嘴头像最大额外放大
+      // 实际最大大小 = eatHeadMinScale + eatHeadScaleRange
+      const eatHeadScaleRange = 1.1;
+
+      // ======================================================
+
+      const count = canvas.width / size;
+
+      const headImg = new Image();
+      const headEatImg = new Image();
+      const bodyImg = new Image();
+      const bgImg = new Image();
+
+      headImg.src = "head.png";
+      headEatImg.src = "head_eat.png";
+      bodyImg.src = "body.png";
+      bgImg.src = "background.jpg";
+
+      const eatSound = new Audio("eat.mp3");
+      const gameOverSound = new Audio("gameover.mp3");
+
+      let snake, food, dir, nextDir, score, gameOver;
+      let eatingStartTime = 0;
+      let pulseTime = 0;
+
+      function reset() {
+        snake = [{ x: 5, y: 5 }];
+        dir = { x: 1, y: 0 };
+        nextDir = dir;
+        score = 0;
+        gameOver = false;
+        eatingStartTime = 0;
+        scoreEl.textContent = score;
+        restartBtn.style.display = "none";
+        makeFood();
+      }
+
+      function makeFood() {
+        food = {
+          x: Math.floor(Math.random() * count),
+          y: Math.floor(Math.random() * count),
+        };
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowUp" && dir.y !== 1) nextDir = { x: 0, y: -1 };
+        if (e.key === "ArrowDown" && dir.y !== -1) nextDir = { x: 0, y: 1 };
+        if (e.key === "ArrowLeft" && dir.x !== 1) nextDir = { x: -1, y: 0 };
+        if (e.key === "ArrowRight" && dir.x !== -1) nextDir = { x: 1, y: 0 };
+        if (e.code === "Space" && gameOver) reset();
+      });
+
+      restartBtn.addEventListener("click", () => {
+        reset();
+      });
+
+      // ==================== 手机滑动控制 ====================
+
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      canvas.addEventListener(
+        "touchstart",
+        (e) => {
+          e.preventDefault();
+
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        },
+        { passive: false },
+      );
+
+      canvas.addEventListener(
+        "touchmove",
+        (e) => {
+          e.preventDefault();
+        },
+        { passive: false },
+      );
+
+      canvas.addEventListener(
+        "touchend",
+        (e) => {
+          e.preventDefault();
+
+          const touchEndX = e.changedTouches[0].clientX;
+          const touchEndY = e.changedTouches[0].clientY;
+
+          const dx = touchEndX - touchStartX;
+          const dy = touchEndY - touchStartY;
+
+          // 滑动距离太短就不触发，避免误触
+          const minSwipeDistance = 30;
+
+          if (
+            Math.abs(dx) < minSwipeDistance &&
+            Math.abs(dy) < minSwipeDistance
+          ) {
+            return;
+          }
+
+          // 横向滑动
+          if (Math.abs(dx) > Math.abs(dy)) {
+            if (dx > 0 && dir.x !== -1) {
+              nextDir = { x: 1, y: 0 }; // 右滑
+            } else if (dx < 0 && dir.x !== 1) {
+              nextDir = { x: -1, y: 0 }; // 左滑
+            }
+          }
+
+          // 纵向滑动
+          else {
+            if (dy > 0 && dir.y !== -1) {
+              nextDir = { x: 0, y: 1 }; // 下滑
+            } else if (dy < 0 && dir.y !== 1) {
+              nextDir = { x: 0, y: -1 }; // 上滑
+            }
+          }
+        },
+        { passive: false },
+      );
+
+      function drawCircleImage(img, x, y, drawSize = size) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(
+          x + drawSize / 2,
+          y + drawSize / 2,
+          drawSize / 2,
+          0,
+          Math.PI * 2,
+        );
+        ctx.clip();
+        ctx.drawImage(img, x, y, drawSize, drawSize);
+        ctx.restore();
+      }
+
+      function playSound(sound) {
+        sound.currentTime = 0;
+        sound.play();
+      }
+
+      function drawBackground() {
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = `rgba(0,0,0,${bgMask})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function loop() {
+        if (gameOver) {
+          drawBackground();
+
+          ctx.fillStyle = "white";
+          ctx.font = "32px sans-serif";
+          ctx.fillText("Game Over", 110, 200);
+          return;
+        }
+
+        dir = nextDir;
+
+        const head = {
+          x: snake[0].x + dir.x,
+          y: snake[0].y + dir.y,
+        };
+
+        // 穿墙逻辑：撞墙不死，从对面出来
+        if (head.x < 0) head.x = count - 1;
+        if (head.x >= count) head.x = 0;
+        if (head.y < 0) head.y = count - 1;
+        if (head.y >= count) head.y = 0;
+
+        // 撞到自己死亡
+        if (snake.some((p) => p.x === head.x && p.y === head.y)) {
+          gameOver = true;
+          restartBtn.style.display = "inline-block";
+          playSound(gameOverSound);
+          return;
+        }
+
+        snake.unshift(head);
+
+        // 吃到食物
+        if (head.x === food.x && head.y === food.y) {
+          score++;
+          scoreEl.textContent = score;
+
+          eatingStartTime = Date.now();
+          playSound(eatSound);
+
+          makeFood();
+        } else {
+          snake.pop();
+        }
+
+        drawBackground();
+
+        // ==================== 食物绘制 ====================
+
+        const foodX = food.x * size;
+        const foodY = food.y * size;
+
+        const pulse = Math.sin(pulseTime) * foodPulseSize;
+
+        ctx.save();
+        ctx.shadowColor = "#FFD700";
+        ctx.shadowBlur = foodGlow;
+
+        ctx.beginPath();
+        ctx.arc(
+          foodX + size / 2,
+          foodY + size / 2,
+          size / 2 + pulse,
+          0,
+          Math.PI * 2,
+        );
+
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = foodStrokeWidth;
+        ctx.stroke();
+        ctx.restore();
+
+        drawCircleImage(bodyImg, foodX, foodY);
+
+        // ==================== 蛇绘制 ====================
+
+        snake.forEach((p, index) => {
+          const x = p.x * size;
+          const y = p.y * size;
+
+          if (index === 0) {
+            const elapsed = Date.now() - eatingStartTime;
+            const isEating = elapsed < eatingDuration;
+
+            if (isEating) {
+              const progress = elapsed / eatingDuration;
+              const wave = Math.sin(progress * Math.PI);
+
+              const scale = eatHeadMinScale + wave * eatHeadScaleRange;
+              const drawSize = size * scale;
+              const offset = (size - drawSize) / 2;
+
+              drawCircleImage(headEatImg, x + offset, y + offset, drawSize);
+            } else {
+              drawCircleImage(headImg, x, y, size);
+            }
+          } else {
+            drawCircleImage(bodyImg, x, y, size);
+          }
+        });
+
+        pulseTime += foodPulseSpeed;
+      }
+
+      Promise.all([
+        new Promise((resolve) => (headImg.onload = resolve)),
+        new Promise((resolve) => (headEatImg.onload = resolve)),
+        new Promise((resolve) => (bodyImg.onload = resolve)),
+        new Promise((resolve) => (bgImg.onload = resolve)),
+      ]).then(() => {
+        reset();
+        setInterval(loop, speed);
+      });
+    </script>
+  </body>
 </html>
