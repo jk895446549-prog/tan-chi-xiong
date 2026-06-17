@@ -18,9 +18,48 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const scoreEl = document.getElementById("score");
 
+// ==================== 常用调试参数 ====================
+
+// 每个格子的大小，也是头像基础尺寸
+// 数值越大，头像越大，棋盘格子越少
 const size = 40;
-const count = canvas.width / size;
+
+// 游戏速度，单位毫秒
+// 数值越小越快，越大越慢
 const speed = 180;
+
+// 吃到食物后，张嘴动画持续时间
+// 推荐 150~300
+const eatingDuration = 200;
+
+// 背景黑色遮罩透明度
+// 0.2 更亮，0.5 更暗
+const bgMask = 0.35;
+
+// 食物呼吸动画幅度
+// 数值越大，外圈跳动越明显
+const foodPulseSize = 6;
+
+// 食物呼吸动画速度
+// 数值越大，呼吸越快
+const foodPulseSpeed = 0.15;
+
+// 食物发光强度
+const foodGlow = 15;
+
+// 食物描边粗细
+const foodStrokeWidth = 4;
+
+// 张嘴头像最小缩放
+const eatHeadMinScale = 0.95;
+
+// 张嘴头像最大额外放大
+// 实际最大大小 = eatHeadMinScale + eatHeadScaleRange
+const eatHeadScaleRange = 1.1;
+
+// ======================================================
+
+const count = canvas.width / size;
 
 const headImg = new Image();
 const headEatImg = new Image();
@@ -36,9 +75,7 @@ const eatSound = new Audio("eat.mp3");
 const gameOverSound = new Audio("gameover.mp3");
 
 let snake, food, dir, nextDir, score, gameOver;
-
 let eatingStartTime = 0;
-const eatingDuration = 200;
 let pulseTime = 0;
 
 function reset() {
@@ -67,6 +104,57 @@ document.addEventListener("keydown", e => {
   if (e.code === "Space" && gameOver) reset();
 });
 
+// ==================== 手机滑动控制 ====================
+
+let touchStartX = 0;
+let touchStartY = 0;
+
+canvas.addEventListener("touchstart", e => {
+  e.preventDefault();
+
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: false });
+
+canvas.addEventListener("touchmove", e => {
+  e.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener("touchend", e => {
+  e.preventDefault();
+
+  const touchEndX = e.changedTouches[0].clientX;
+  const touchEndY = e.changedTouches[0].clientY;
+
+  const dx = touchEndX - touchStartX;
+  const dy = touchEndY - touchStartY;
+
+  // 滑动距离太短就不触发，避免误触
+  const minSwipeDistance = 30;
+
+  if (Math.abs(dx) < minSwipeDistance && Math.abs(dy) < minSwipeDistance) {
+    return;
+  }
+
+  // 横向滑动
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > 0 && dir.x !== -1) {
+      nextDir = {x:1, y:0}; // 右滑
+    } else if (dx < 0 && dir.x !== 1) {
+      nextDir = {x:-1, y:0}; // 左滑
+    }
+  }
+
+  // 纵向滑动
+  else {
+    if (dy > 0 && dir.y !== -1) {
+      nextDir = {x:0, y:1}; // 下滑
+    } else if (dy < 0 && dir.y !== 1) {
+      nextDir = {x:0, y:-1}; // 上滑
+    }
+  }
+}, { passive: false });
+
 function drawCircleImage(img, x, y, drawSize = size) {
   ctx.save();
   ctx.beginPath();
@@ -87,11 +175,15 @@ function playSound(sound) {
   sound.play();
 }
 
+function drawBackground() {
+  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = `rgba(0,0,0,${bgMask})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
 function loop() {
   if (gameOver) {
-    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawBackground();
 
     ctx.fillStyle = "white";
     ctx.font = "32px sans-serif";
@@ -106,11 +198,13 @@ function loop() {
     y: snake[0].y + dir.y
   };
 
+  // 穿墙逻辑：撞墙不死，从对面出来
   if (head.x < 0) head.x = count - 1;
   if (head.x >= count) head.x = 0;
   if (head.y < 0) head.y = count - 1;
   if (head.y >= count) head.y = 0;
 
+  // 撞到自己死亡
   if (snake.some(p => p.x === head.x && p.y === head.y)) {
     gameOver = true;
     playSound(gameOverSound);
@@ -119,6 +213,7 @@ function loop() {
 
   snake.unshift(head);
 
+  // 吃到食物
   if (head.x === food.x && head.y === food.y) {
     score++;
     scoreEl.textContent = score;
@@ -131,38 +226,36 @@ function loop() {
     snake.pop();
   }
 
-  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+
+  // ==================== 食物绘制 ====================
 
   const foodX = food.x * size;
-const foodY = food.y * size;
+  const foodY = food.y * size;
 
-// 呼吸效果
-const pulse = Math.sin(pulseTime) * 6;
+  const pulse = Math.sin(pulseTime) * foodPulseSize;
 
-ctx.save();
+  ctx.save();
+  ctx.shadowColor = "#FFD700";
+  ctx.shadowBlur = foodGlow;
 
-ctx.shadowColor = "#FFD700";
-ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.arc(
+    foodX + size / 2,
+    foodY + size / 2,
+    size / 2 + pulse,
+    0,
+    Math.PI * 2
+  );
 
-ctx.beginPath();
-ctx.arc(
-  foodX + size / 2,
-  foodY + size / 2,
-  size / 2 + pulse,
-  0,
-  Math.PI * 2
-);
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = foodStrokeWidth;
+  ctx.stroke();
+  ctx.restore();
 
-ctx.strokeStyle = "white";
-ctx.lineWidth = 4;
-ctx.stroke();
+  drawCircleImage(bodyImg, foodX, foodY);
 
-ctx.restore();
-
-// 画食物头像
-drawCircleImage(bodyImg, foodX, foodY);
+  // ==================== 蛇绘制 ====================
 
   snake.forEach((p, index) => {
     const x = p.x * size;
@@ -176,25 +269,20 @@ drawCircleImage(bodyImg, foodX, foodY);
         const progress = elapsed / eatingDuration;
         const wave = Math.sin(progress * Math.PI);
 
-        const scale = 0.95 + wave * 1.1;
+        const scale = eatHeadMinScale + wave * eatHeadScaleRange;
         const drawSize = size * scale;
         const offset = (size - drawSize) / 2;
 
-        drawCircleImage(
-          headEatImg,
-          x + offset,
-          y + offset,
-          drawSize
-        );
+        drawCircleImage(headEatImg, x + offset, y + offset, drawSize);
       } else {
         drawCircleImage(headImg, x, y, size);
       }
     } else {
       drawCircleImage(bodyImg, x, y, size);
     }
-
   });
-pulseTime += 0.15;
+
+  pulseTime += foodPulseSpeed;
 }
 
 Promise.all([
