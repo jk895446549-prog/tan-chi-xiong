@@ -42,27 +42,167 @@
         /* 防止手指滑动时页面滚动 */
         touch-action: none;
       }
+      #startBtn {
+        position: fixed;
+
+        left: 50%;
+        top: 62%;
+
+        transform: translate(-50%, -50%);
+
+        padding: 14px 30px;
+
+        font-size: 20px;
+        font-weight: bold;
+
+        border: none;
+        border-radius: 12px;
+
+        background: #4caf50;
+        color: white;
+
+        z-index: 999;
+      }
       #restartBtn {
-        display: none;
         margin-top: 10px;
         padding: 12px 24px;
         font-size: 18px;
         border: none;
         border-radius: 12px;
       }
+
+      #restartBtn {
+        display: none;
+
+        position: fixed;
+
+        left: 50%;
+        top: 62%;
+
+        transform: translate(-50%, -50%);
+
+        padding: 14px 30px;
+
+        font-size: 20px;
+        font-weight: bold;
+
+        border: none;
+        border-radius: 12px;
+
+        background: #ffb800;
+        color: #fff;
+
+        cursor: pointer;
+
+        z-index: 999;
+      }
+
+      #version {
+        position: fixed;
+
+        right: 10px;
+        bottom: 10px;
+
+        font-size: 12px;
+
+        color: rgba(255, 255, 255, 0.5);
+
+        z-index: 9999;
+
+        pointer-events: none;
+      }
+
+      #topBar {
+        width: min(92vw, 78vh, 600px);
+
+        margin: 10px auto 6px;
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+      }
+
+      #gameTitle {
+        font-size: 34px;
+        font-weight: bold;
+      }
+
+      #scorePanel {
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      #musicBtn {
+        padding: 6px 12px;
+
+        border: none;
+
+        border-radius: 10px;
+
+        background: rgba(0, 0, 0, 0.4);
+
+        color: white;
+
+        cursor: pointer;
+      }
+
+      #bottomBar {
+        width: min(92vw, 78vh, 600px);
+
+        margin: 8px auto;
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+      }
+
+      #controlTips {
+        font-size: 16px;
+
+        color: white;
+      }
     </style>
   </head>
   <body>
-    <h2>贪吃熊 分数：<span id="score">0</span></h2>
+    <div id="topBar">
+      <div id="gameTitle">贪吃熊</div>
+
+      <div id="scorePanel">
+        分数：<span id="score">0</span> 最高分：<span id="bestScore">0</span>
+      </div>
+    </div>
     <canvas id="game" width="400" height="400"></canvas>
-    <p>方向键，滑动屏幕控制，空格重开</p>
+    <div id="bottomBar">
+      <div id="controlTips">方向键，滑动屏幕控制，空格重开</div>
+
+      <button id="musicBtn">🔇静音</button>
+    </div>
+    <button id="startBtn">开始游戏</button>
     <button id="restartBtn">重新开始</button>
+
+    <div id="version"></div>
 
     <script>
       const canvas = document.getElementById("game");
       const ctx = canvas.getContext("2d");
       const scoreEl = document.getElementById("score");
+      const bestScoreEl = document.getElementById("bestScore");
       const restartBtn = document.getElementById("restartBtn");
+      const startBtn = document.getElementById("startBtn");
+      const musicBtn = document.getElementById("musicBtn");
+      const versionEl = document.getElementById("version");
+
+      // ==================== 版本信息 ====================
+
+      const GAME_VERSION = "v1.0.3";
+
+      versionEl.textContent = GAME_VERSION;
+
+      // ================================================
 
       // ==================== 常用调试参数 ====================
 
@@ -119,8 +259,21 @@
 
       const eatSound = new Audio("eat.mp3");
       const gameOverSound = new Audio("gameover.mp3");
+      const bgm = new Audio("bgm.mp3");
+
+      bgm.loop = true;
+      bgm.volume = 0.25;
+
+      bgm.loop = true; // 循环播放
+      bgm.volume = 0.4; // 音量 0~1
 
       let snake, food, dir, nextDir, score, gameOver;
+
+      let bestScore = localStorage.getItem("bestScore") || 0;
+      bestScoreEl.textContent = bestScore;
+
+      let gameStarted = false;
+      let gameLoop = null;
       let eatingStartTime = 0;
       let pulseTime = 0;
 
@@ -151,10 +304,37 @@
         if (e.code === "Space" && gameOver) reset();
       });
 
+      startBtn.addEventListener("click", () => {
+        startBtn.style.display = "none";
+
+        gameStarted = true;
+
+        bgm.play();
+
+        reset();
+
+        if (!gameLoop) {
+          gameLoop = setInterval(loop, speed);
+        }
+      });
       restartBtn.addEventListener("click", () => {
         reset();
       });
+      let musicEnabled = true;
 
+      musicBtn.addEventListener("click", () => {
+        musicEnabled = !musicEnabled;
+
+        if (musicEnabled) {
+          bgm.play();
+
+          musicBtn.textContent = "🔊音乐";
+        } else {
+          bgm.pause();
+
+          musicBtn.textContent = "🔇静音";
+        }
+      });
       // ==================== 手机滑动控制 ====================
 
       let touchStartX = 0;
@@ -253,7 +433,13 @@
 
           ctx.fillStyle = "white";
           ctx.font = "32px sans-serif";
-          ctx.fillText("Game Over", 110, 200);
+          ctx.textAlign = "center";
+
+          ctx.fillText(
+            "熊熊很大，尼吃不下~",
+            canvas.width / 2,
+            canvas.height / 2 - 30,
+          );
           return;
         }
 
@@ -284,6 +470,12 @@
         if (head.x === food.x && head.y === food.y) {
           score++;
           scoreEl.textContent = score;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestScoreEl.textContent = bestScore;
+            localStorage.setItem("bestScore", bestScore);
+          }
 
           eatingStartTime = Date.now();
           playSound(eatSound);
@@ -358,8 +550,7 @@
         new Promise((resolve) => (bodyImg.onload = resolve)),
         new Promise((resolve) => (bgImg.onload = resolve)),
       ]).then(() => {
-        reset();
-        setInterval(loop, speed);
+        drawBackground();
       });
     </script>
   </body>
