@@ -196,7 +196,7 @@
       const musicBtn = document.getElementById("musicBtn");
       const versionEl = document.getElementById("version");
 
-      const GAME_VERSION = "v1.4.2-smooth";
+      const GAME_VERSION = "v1.4.3-smooth";
       versionEl.textContent = GAME_VERSION;
 
       // ==================== 常用调试参数 ====================
@@ -293,7 +293,8 @@
       let lastMoveTime = 0;
       let prevSnake = [];
       let moveProgress = 1;
-
+      let headCurrentAngle = 0;
+      let headTargetAngle = 0;
       let eatingStartTime = 0;
       let pulseTime = 0;
 
@@ -329,6 +330,8 @@
         prevSnake = snake.map((p) => ({ ...p }));
         moveProgress = 1;
         lastMoveTime = performance.now();
+        headCurrentAngle = -Math.PI / 2;
+        headTargetAngle = -Math.PI / 2;
 
         if (!animationId) {
           animationId = requestAnimationFrame(gameFrame);
@@ -496,7 +499,7 @@
       let touchStartX = 0;
       let touchStartY = 0;
 
-      canvas.addEventListener(
+      document.addEventListener(
         "touchmove",
         (e) => {
           e.preventDefault();
@@ -536,7 +539,7 @@
         { passive: false },
       );
 
-      canvas.addEventListener(
+      document.addEventListener(
         "touchend",
         (e) => {
           e.preventDefault();
@@ -544,7 +547,7 @@
         { passive: false },
       );
 
-      canvas.addEventListener(
+      document.addEventListener(
         "touchend",
         (e) => {
           e.preventDefault();
@@ -655,7 +658,68 @@
 
         drawCircleImage(foodImg, foodX, foodY);
       }
+      function drawRotatedCircleImage(
+        img,
+        x,
+        y,
+        drawSize = size,
+        direction = { x: 1, y: 0 },
+      ) {
+        let angle = 0;
+        if (direction.y === 1) angle = 0;
+        if (direction.x === -1) angle = Math.PI / 2;
+        if (direction.y === -1) angle = Math.PI;
+        if (direction.x === 1) angle = -Math.PI / 2;
 
+        ctx.save();
+
+        ctx.translate(x + drawSize / 2, y + drawSize / 2);
+        ctx.rotate(angle);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, drawSize / 2, 0, Math.PI * 2);
+        ctx.clip();
+
+        ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+
+        ctx.restore();
+      }
+
+      function drawRotatedCircleImageByAngle(
+        img,
+        x,
+        y,
+        drawSize = size,
+        angle = 0,
+      ) {
+        ctx.save();
+        ctx.translate(x + drawSize / 2, y + drawSize / 2);
+        ctx.rotate(angle);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, drawSize / 2, 0, Math.PI * 2);
+        ctx.clip();
+
+        ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+        ctx.restore();
+      }
+
+      function getAngleByDirection(direction) {
+        if (direction.y === 1) return 0;
+        if (direction.x === -1) return Math.PI / 2;
+        if (direction.y === -1) return Math.PI;
+        if (direction.x === 1) return -Math.PI / 2;
+        return headCurrentAngle;
+      }
+
+      function lerpAngle(current, target, amount) {
+        let diff = target - current;
+
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+
+        return current + diff * amount;
+      }
       function drawPopup(popup) {
         const alpha = popup.life / popup.maxLife;
 
@@ -782,7 +846,6 @@
         let dx = p.x - prev.x;
         let dy = p.y - prev.y;
 
-        // 处理穿墙时的平滑过渡，避免从地图另一边横穿回来
         if (dx > count / 2) dx -= count;
         if (dx < -count / 2) dx += count;
         if (dy > count / 2) dy -= count;
@@ -827,10 +890,21 @@
         snake.forEach((p, index) => {
           const prev = prevSnake[index] || p;
           const pos = getRenderPosition(p, prev);
+          const headDirection = {
+            x: p.x - prev.x,
+            y: p.y - prev.y,
+          };
           const x = pos.x;
           const y = pos.y;
 
           if (index === 0) {
+            headTargetAngle = getAngleByDirection(headDirection);
+            headCurrentAngle = lerpAngle(
+              headCurrentAngle,
+              headTargetAngle,
+              0.25,
+            );
+
             const elapsed = Date.now() - eatingStartTime;
             const isEating = elapsed < eatingDuration;
 
@@ -840,13 +914,47 @@
               const scale = eatHeadMinScale + wave * eatHeadScaleRange;
               const drawSize = size * scale;
               const offset = (size - drawSize) / 2;
-              drawCircleImage(headEatImg, x + offset, y + offset, drawSize);
+
+              drawRotatedCircleImageByAngle(
+                headEatImg,
+                x + offset,
+                y + offset,
+                drawSize,
+                headCurrentAngle,
+              );
             } else {
-              drawCircleImage(headImg, x, y, size);
+              drawRotatedCircleImageByAngle(
+                headImg,
+                x,
+                y,
+                size,
+                headCurrentAngle,
+              );
             }
           } else {
             const skinType = bodySkins[index - 1] || "body";
-            drawCircleImage(getBodyImage(skinType), x, y, size);
+            const prevPart = snake[index - 1];
+
+            let bodyDx = prevPart.x - p.x;
+            let bodyDy = prevPart.y - p.y;
+
+            if (bodyDx > count / 2) bodyDx -= count;
+            if (bodyDx < -count / 2) bodyDx += count;
+            if (bodyDy > count / 2) bodyDy -= count;
+            if (bodyDy < -count / 2) bodyDy += count;
+
+            const bodyDirection = {
+              x: Math.sign(bodyDx),
+              y: Math.sign(bodyDy),
+            };
+
+            drawRotatedCircleImage(
+              getBodyImage(skinType),
+              x,
+              y,
+              size,
+              bodyDirection,
+            );
           }
         });
 
