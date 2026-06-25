@@ -196,7 +196,7 @@
       const musicBtn = document.getElementById("musicBtn");
       const versionEl = document.getElementById("version");
 
-      const GAME_VERSION = "v1.4.4-smooth";
+      const GAME_VERSION = "v1.4.5-smooth";
       versionEl.textContent = GAME_VERSION;
 
       // ==================== 常用调试参数 ====================
@@ -468,13 +468,39 @@
         if (e.code === "Space" && gameOver) reset();
       });
 
-      startBtn.addEventListener("click", () => {
+      function startGame() {
         startBtn.style.display = "none";
         gameStarted = true;
 
-        bgm.play();
+        bgm.play().catch(() => {});
         reset();
-      });
+      }
+
+      startBtn.addEventListener("click", startGame);
+
+      startBtn.addEventListener(
+        "touchstart",
+        (e) => {
+          e.stopPropagation();
+          startGame();
+        },
+        { passive: true },
+      );
+
+      function restartGame() {
+        reset();
+      }
+
+      restartBtn.addEventListener("click", restartGame);
+
+      restartBtn.addEventListener(
+        "touchstart",
+        (e) => {
+          e.stopPropagation();
+          restartGame();
+        },
+        { passive: true },
+      );
 
       restartBtn.addEventListener("click", () => {
         reset();
