@@ -196,7 +196,7 @@
       const musicBtn = document.getElementById("musicBtn");
       const versionEl = document.getElementById("version");
 
-      const GAME_VERSION = "v1.4.3-smooth";
+      const GAME_VERSION = "v1.4.4-smooth";
       versionEl.textContent = GAME_VERSION;
 
       // ==================== 常用调试参数 ====================
@@ -502,6 +502,7 @@
       document.addEventListener(
         "touchmove",
         (e) => {
+          if (e.target.tagName === "BUTTON") return;
           e.preventDefault();
 
           const touchMoveX = e.touches[0].clientX;
@@ -542,6 +543,7 @@
       document.addEventListener(
         "touchend",
         (e) => {
+          if (e.target.tagName === "BUTTON") return;
           e.preventDefault();
         },
         { passive: false },
