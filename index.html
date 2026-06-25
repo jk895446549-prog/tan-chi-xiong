@@ -18,110 +18,44 @@
         font-family: sans-serif;
         overflow: hidden;
         touch-action: none;
-      }
-
-      h2 {
-        margin: 10px 0 6px;
-        font-size: clamp(18px, 5vw, 28px);
-      }
-
-      p {
-        margin: 6px 0;
-        font-size: clamp(12px, 3.5vw, 16px);
+        user-select: none;
       }
 
       canvas {
         background: #111;
         display: block;
         margin: 8px auto 0;
-
-        /* 手机、平板、电脑自动适配 */
         width: min(92vw, 78vh, 600px);
         height: min(92vw, 78vh, 600px);
-
-        /* 防止手指滑动时页面滚动 */
         touch-action: none;
       }
-      #startBtn {
-        position: fixed;
 
-        left: 50%;
-        top: 62%;
-
-        transform: translate(-50%, -50%);
-
-        padding: 14px 30px;
-
-        font-size: 20px;
-        font-weight: bold;
-
+      button {
         border: none;
-        border-radius: 12px;
-
-        background: #4caf50;
-        color: white;
-
-        z-index: 999;
-      }
-      #restartBtn {
-        margin-top: 10px;
-        padding: 12px 24px;
-        font-size: 18px;
-        border: none;
-        border-radius: 12px;
-      }
-
-      #restartBtn {
-        display: none;
-
-        position: fixed;
-
-        left: 50%;
-        top: 62%;
-
-        transform: translate(-50%, -50%);
-
-        padding: 14px 30px;
-
-        font-size: 20px;
-        font-weight: bold;
-
-        border: none;
-        border-radius: 12px;
-
-        background: #ffb800;
-        color: #fff;
-
         cursor: pointer;
-
-        z-index: 999;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
 
-      #version {
-        position: fixed;
-
-        right: 10px;
-        bottom: 10px;
-
-        font-size: 12px;
-
-        color: rgba(255, 255, 255, 0.5);
-
-        z-index: 9999;
-
-        pointer-events: none;
+      #topBar,
+      #bottomBar {
+        width: min(92vw, 78vh, 600px);
+        margin-left: auto;
+        margin-right: auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
       }
 
       #topBar {
-        width: min(92vw, 78vh, 600px);
+        margin-top: 10px;
+        margin-bottom: 6px;
+      }
 
-        margin: 10px auto 6px;
-
-        display: flex;
-
-        justify-content: space-between;
-
-        align-items: center;
+      #bottomBar {
+        margin-top: 8px;
+        margin-bottom: 8px;
       }
 
       #gameTitle {
@@ -134,59 +68,129 @@
         font-weight: bold;
       }
 
-      #musicBtn {
-        padding: 6px 12px;
-
-        border: none;
-
-        border-radius: 10px;
-
-        background: rgba(0, 0, 0, 0.4);
-
-        color: white;
-
-        cursor: pointer;
-      }
-
-      #bottomBar {
-        width: min(92vw, 78vh, 600px);
-
-        margin: 8px auto;
-
-        display: flex;
-
-        justify-content: space-between;
-
-        align-items: center;
-      }
-
       #controlTips {
         font-size: 16px;
+      }
 
+      #musicBtn {
+        padding: 6px 12px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.4);
         color: white;
+      }
+
+      #startBtn,
+      #restartBtn {
+        position: fixed;
+        left: 50%;
+        top: 62%;
+        transform: translate(-50%, -50%);
+        padding: 14px 30px;
+        font-size: 20px;
+        font-weight: bold;
+        border-radius: 12px;
+        color: white;
+        z-index: 999;
+      }
+
+      #startBtn {
+        background: #4caf50;
+      }
+
+      #restartBtn {
+        display: none;
+        background: #ffb800;
+      }
+
+      #version {
+        position: fixed;
+        right: 10px;
+        bottom: 10px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        z-index: 9999;
+        pointer-events: none;
       }
     </style>
   </head>
+
   <body>
     <div id="topBar">
       <div id="gameTitle">贪吃熊</div>
-
       <div id="scorePanel">
         分数：<span id="score">0</span> 最高分：<span id="bestScore">0</span>
       </div>
     </div>
+
     <canvas id="game" width="384" height="384"></canvas>
+
     <div id="bottomBar">
       <div id="controlTips">方向键，滑动屏幕控制，空格重开</div>
-
-      <button id="musicBtn">🔇静音</button>
+      <button id="musicBtn" type="button">🔇静音</button>
     </div>
-    <button id="startBtn">开始游戏</button>
-    <button id="restartBtn">重新开始</button>
 
+    <button id="startBtn" type="button">开始游戏</button>
+    <button id="restartBtn" type="button">重新开始</button>
     <div id="version"></div>
 
     <script>
+      const GAME_VERSION = "v1.4.7";
+
+      // ==================== 调试参数 / Game Balance ====================
+
+      // 地图
+      const size = 32; // 单格大小(px)
+
+      // 游戏节奏
+      const speed = 180; // 普通速度，越小越快
+      const speedUpDuration = 6000; // 波波持续时间(ms)
+      const maxSpeedLevel = 5; // 最大加速层数
+      const speedLevelDelays = [180, 160, 140, 120, 90, 70]; // 每层速度
+
+      // 食物概率（普通模式）
+      const normalFoodRate = 0.4; // 普通食物
+      const boboFoodRate = 0.2; // 波波
+      const heheziFoodRate = 0.3; // 贺贺子
+      // Bob = 0.1
+
+      // 食物概率（波波模式）
+      const speedModeNormalRate = 0.2; // 普通食物
+      const speedModeBoboRate = 0.3; // 波波
+      const speedModeHeheziRate = 0.2; // 贺贺子
+      // Bob = 0.3
+
+      // 食物数量
+      const normalFoodCount = 3; // 普通模式食物数量
+      const speedModeFoodCounts = [3, 4, 6, 8, 10, 15]; // 第0项普通，1~5项波波层数
+
+      // 食物消失
+      const foodLifeRandomOffset = 5000; // 食物出生时间随机偏移，避免一起消失
+      const bombLifeTime = 6000; // Bob存活时间(ms)
+      const normalFoodLifeTime = 12000; // 普通食物存在时间(ms)
+      const foodDisappearDuration = 800; // 消失动画时长(ms)
+      const foodBlinkSpeed = 160; // 闪烁速度
+      const foodMinAlpha = 0.15; // 最低透明度
+
+      // 吃东西动画
+      const eatingDuration = 200; // 动画时长(ms)
+      const eatHeadMinScale = 0.95; // 最小缩放
+      const eatHeadScaleRange = 1.1; // 最大放大倍率
+
+      // 食物光效
+      const bgMask = 0.35; // 背景遮罩
+      const foodPulseSize = 6; // 呼吸幅度
+      const foodPulseSpeed = 0.15; // 呼吸速度
+      const foodGlow = 15; // 发光强度
+      const foodStrokeWidth = 4; // 外圈粗细
+
+      // 飘字
+      const popupLife = 80; // 持续时间
+      const popupRiseSpeed = 0.7; // 上升速度
+      const popupFontSize = 22; // 字体大小
+      const popupStrokeWidth = 4; // 描边粗细
+      const popupYOffset = 0; // Y轴偏移
+
+      // ==================== DOM ====================
       const canvas = document.getElementById("game");
       const ctx = canvas.getContext("2d");
       const scoreEl = document.getElementById("score");
@@ -195,159 +199,236 @@
       const startBtn = document.getElementById("startBtn");
       const musicBtn = document.getElementById("musicBtn");
       const versionEl = document.getElementById("version");
-
-      const GAME_VERSION = "v1.4.5-smooth";
       versionEl.textContent = GAME_VERSION;
 
-      // ==================== 常用调试参数 ====================
-
-      const size = 32;
-
-      const speed = 160;
-
-      // 波波模式持续时间
-      const speedUpDuration = 5000;
-
-      // 波波最高叠加层数
-      const maxSpeedLevel = 5;
-
-      // 不同波波层数对应速度
-      const speedLevelDelays = [160, 140, 120, 100, 85, 70];
-
-      const eatingDuration = 200;
-      const bgMask = 0.35;
-      const foodPulseSize = 6;
-      const foodPulseSpeed = 0.15;
-      const foodGlow = 15;
-      const foodStrokeWidth = 4;
-      const eatHeadMinScale = 0.95;
-      const eatHeadScaleRange = 1.1;
-
-      // 普通模式
-      const normalFoodRate = 0.2;
-      const boboFoodRate = 0.6;
-      const heheziFoodRate = 0.2;
-
-      // 波波模式
-      const speedModeNormalRate = 0.25;
-      const speedModeBoboRate = 0.2;
-      const speedModeHeheziRate = 0.25;
-      // 剩下 30% 是 Bob
-
-      const normalFoodCount = 1;
-      const speedModeFoodCount = 4;
-
-      const bombLifeTime = 3000;
-
-      // ======================================================
-
+      // ==================== 常量 ====================
       const count = canvas.width / size;
-
       const FOOD_NORMAL = "normal";
       const FOOD_SPEED = "speed";
       const FOOD_TRIPLE = "triple";
       const FOOD_BOMB = "bomb";
 
-      const headImg = new Image();
-      const headEatImg = new Image();
-      const bodyImg = new Image();
-      const bgImg = new Image();
-      const bgSpeedImg = new Image();
-      const bgBombImg = new Image();
-
-      const boboImg = new Image();
-      const heheziImg = new Image();
-      const xiaobaiImg = new Image();
-      const xiaomaoImg = new Image();
-      const bobImg = new Image();
-
-      headImg.src = "head.png";
-      headEatImg.src = "head_eat.png";
-      bodyImg.src = "body.png";
-      bgImg.src = "background.jpg";
-      bgSpeedImg.src = "background_speed.jpg";
-      bgBombImg.src = "background_bomb.jpg";
-
-      boboImg.src = "bobo.png";
-      heheziImg.src = "hehezi.png";
-      xiaobaiImg.src = "xiaobai.png";
-      xiaomaoImg.src = "xiaomao.png";
-      bobImg.src = "bob.png";
+      // ==================== 资源 ====================
+      const images = {
+        head: loadImage("head.png"),
+        headEat: loadImage("head_eat.png"),
+        body: loadImage("body.png"),
+        bg: loadImage("background.jpg"),
+        bgSpeed: loadImage("background_speed.jpg"),
+        bgBomb: loadImage("background_bomb.jpg"),
+        bobo: loadImage("bobo.png"),
+        hehezi: loadImage("hehezi.png"),
+        xiaobai: loadImage("xiaobai.png"),
+        xiaomao: loadImage("xiaomao.png"),
+        bob: loadImage("bob.png"),
+      };
 
       const eatSound = new Audio("eat.mp3");
       const gameOverSound = new Audio("gameover.mp3");
       const bgm = new Audio("bgm.mp3");
-
       bgm.loop = true;
       bgm.volume = 0.4;
 
-      let snake, foods, dir, nextDir, score, gameOver;
+      // ==================== 状态 ====================
+      let snake = [];
+      let prevSnake = [];
       let bodySkins = [];
+      let foods = [];
+      let score = 0;
+      let bestScore = Number(localStorage.getItem("bestScore") || 0);
 
-      let bestScore = localStorage.getItem("bestScore") || 0;
-      bestScoreEl.textContent = bestScore;
+      let dir = { x: 1, y: 0 };
+      let nextDir = { x: 1, y: 0 };
 
       let gameStarted = false;
+      let gameOver = false;
+      let bombGameOver = false;
+      let musicEnabled = true;
+      musicBtn.textContent = "🔊音乐";
+
       let animationId = null;
       let moveDelay = speed;
       let lastMoveTime = 0;
-      let prevSnake = [];
       let moveProgress = 1;
-      let headCurrentAngle = 0;
-      let headTargetAngle = 0;
+
       let eatingStartTime = 0;
       let pulseTime = 0;
-
       let scorePopups = [];
 
       let speedModeEndTime = 0;
       let speedLevel = 0;
-      let bombGameOver = false;
+
+      let headCurrentAngle = -Math.PI / 2;
+      let headTargetAngle = -Math.PI / 2;
+
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let directionChangedThisStep = false;
+      bestScoreEl.textContent = bestScore;
+
+      // ==================== 初始化 ====================
+      function loadImage(src) {
+        const img = new Image();
+        img.src = src;
+        return img;
+      }
 
       function reset() {
         snake = [{ x: 5, y: 5 }];
+        prevSnake = snake.map(copyPoint);
         bodySkins = [];
+        foods = [];
+        scorePopups = [];
 
         dir = { x: 1, y: 0 };
-        nextDir = dir;
+        nextDir = { x: 1, y: 0 };
+        moveDelay = speed;
+        moveProgress = 1;
+        lastMoveTime = performance.now();
 
         score = 0;
         gameOver = false;
         bombGameOver = false;
-
         speedModeEndTime = 0;
         speedLevel = 0;
-
         eatingStartTime = 0;
-        foods = [];
+        headCurrentAngle = -Math.PI / 2;
+        headTargetAngle = -Math.PI / 2;
+        directionChangedThisStep = false;
 
         scoreEl.textContent = score;
         restartBtn.style.display = "none";
-
-        setGameLoop(speed);
         fillFoods();
-
-        prevSnake = snake.map((p) => ({ ...p }));
-        moveProgress = 1;
-        lastMoveTime = performance.now();
-        headCurrentAngle = -Math.PI / 2;
-        headTargetAngle = -Math.PI / 2;
 
         if (!animationId) {
           animationId = requestAnimationFrame(gameFrame);
         }
       }
 
-      function setGameLoop(delay) {
-        moveDelay = delay;
+      function startGame() {
+        if (gameStarted && !gameOver) return;
+        startBtn.style.display = "none";
+        gameStarted = true;
+        bgm.play().catch(() => {});
+        reset();
       }
 
+      function restartGame() {
+        reset();
+      }
+
+      function toggleMusic() {
+        musicEnabled = !musicEnabled;
+        if (musicEnabled) {
+          bgm.play().catch(() => {});
+          musicBtn.textContent = "🔊音乐";
+        } else {
+          bgm.pause();
+          musicBtn.textContent = "🔇静音";
+        }
+      }
+
+      // ==================== 输入控制 ====================
+      function bindTap(button, handler) {
+        button.addEventListener("click", handler);
+        button.addEventListener(
+          "touchstart",
+          (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handler();
+          },
+          { passive: false },
+        );
+      }
+
+      bindTap(startBtn, startGame);
+      bindTap(restartBtn, restartGame);
+      bindTap(musicBtn, toggleMusic);
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowUp") setNextDirection(0, -1);
+        if (e.key === "ArrowDown") setNextDirection(0, 1);
+        if (e.key === "ArrowLeft") setNextDirection(-1, 0);
+        if (e.key === "ArrowRight") setNextDirection(1, 0);
+        if (e.code === "Space" && gameOver) restartGame();
+      });
+
+      document.addEventListener(
+        "touchstart",
+        (e) => {
+          if (isButtonTouch(e)) return;
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        },
+        { passive: true },
+      );
+
+      document.addEventListener(
+        "touchmove",
+        (e) => {
+          if (isButtonTouch(e)) return;
+          if (!gameStarted || gameOver) return;
+          e.preventDefault();
+
+          const touchMoveX = e.touches[0].clientX;
+          const touchMoveY = e.touches[0].clientY;
+          const dx = touchMoveX - touchStartX;
+          const dy = touchMoveY - touchStartY;
+          const minSwipeDistance = 18;
+
+          if (
+            Math.abs(dx) < minSwipeDistance &&
+            Math.abs(dy) < minSwipeDistance
+          )
+            return;
+
+          if (Math.abs(dx) > Math.abs(dy)) {
+            setNextDirection(Math.sign(dx), 0);
+          } else {
+            setNextDirection(0, Math.sign(dy));
+          }
+
+          touchStartX = touchMoveX;
+          touchStartY = touchMoveY;
+        },
+        { passive: false },
+      );
+
+      document.addEventListener(
+        "touchend",
+        (e) => {
+          if (isButtonTouch(e)) return;
+          if (gameStarted) e.preventDefault();
+        },
+        { passive: false },
+      );
+
+      function isButtonTouch(e) {
+        return Boolean(e.target.closest && e.target.closest("button"));
+      }
+
+      function setNextDirection(x, y) {
+        if (directionChangedThisStep) return;
+        if (x !== 0 && dir.x === -x) return;
+        if (y !== 0 && dir.y === -y) return;
+        if (x === dir.x && y === dir.y) return;
+
+        nextDir = { x, y };
+        directionChangedThisStep = true;
+      }
+
+      // ==================== 游戏逻辑 ====================
       function isSpeedMode() {
         return speedLevel > 0 && Date.now() <= speedModeEndTime;
       }
 
       function getTargetFoodCount() {
-        return isSpeedMode() ? speedModeFoodCount : normalFoodCount;
+        if (!isSpeedMode()) return normalFoodCount;
+
+        return (
+          speedModeFoodCounts[speedLevel] || speedModeFoodCounts[maxSpeedLevel]
+        );
       }
 
       function randomFoodType() {
@@ -358,7 +439,6 @@
           if (r < speedModeNormalRate + speedModeBoboRate) return FOOD_SPEED;
           if (r < speedModeNormalRate + speedModeBoboRate + speedModeHeheziRate)
             return FOOD_TRIPLE;
-
           return FOOD_BOMB;
         }
 
@@ -366,62 +446,78 @@
         if (r < normalFoodRate + boboFoodRate) return FOOD_SPEED;
         if (r < normalFoodRate + boboFoodRate + heheziFoodRate)
           return FOOD_TRIPLE;
-
         return FOOD_BOMB;
       }
 
       function createOneFood() {
-        let newFood;
-
+        let food;
         do {
-          newFood = {
+          food = {
             x: Math.floor(Math.random() * count),
             y: Math.floor(Math.random() * count),
             type: randomFoodType(),
-            createdAt: Date.now(),
+            createdAt: Date.now() - Math.random() * foodLifeRandomOffset,
           };
-        } while (
-          snake.some((p) => p.x === newFood.x && p.y === newFood.y) ||
-          foods.some((f) => f.x === newFood.x && f.y === newFood.y)
-        );
+        } while (isOccupied(food.x, food.y));
+        return food;
+      }
 
-        return newFood;
+      function isOccupied(x, y) {
+        return (
+          snake.some((p) => p.x === x && p.y === y) ||
+          foods.some((f) => f.x === x && f.y === y)
+        );
+      }
+
+      function getActiveFoodCount() {
+        return foods.filter((food) => !food.removingAt).length;
       }
 
       function fillFoods() {
         const targetCount = getTargetFoodCount();
 
-        while (foods.length < targetCount) {
-          foods.push(createOneFood());
+        if (foods.length < targetCount) {
+          while (foods.length < targetCount) {
+            foods.push(createOneFood());
+          }
         }
 
-        while (foods.length > targetCount) {
-          foods.pop();
+        while (getActiveFoodCount() > targetCount) {
+          const activeFoods = foods.filter((food) => !food.removingAt);
+          markFoodRemoving(activeFoods[activeFoods.length - 1]);
         }
       }
 
-      function removeExpiredBombs() {
+      function markExpiredFoods() {
         const now = Date.now();
 
-        foods = foods.filter((food) => {
-          if (food.type !== FOOD_BOMB) return true;
+        foods.forEach((food) => {
+          if (food.removingAt) return;
 
-          return now - food.createdAt <= bombLifeTime;
+          const lifeTime =
+            food.type === FOOD_BOMB ? bombLifeTime : normalFoodLifeTime;
+
+          const age = now - food.createdAt;
+
+          if (age >= lifeTime - foodDisappearDuration) {
+            markFoodRemoving(food);
+          }
         });
+
+        removeFinishedDisappearingFoods();
       }
 
-      function getFoodImage(type) {
-        if (type === FOOD_SPEED) return boboImg;
-        if (type === FOOD_TRIPLE) return heheziImg;
-        if (type === FOOD_BOMB) return bobImg;
-        return bodyImg;
+      function markFoodRemoving(food) {
+        if (!food || food.removingAt) return;
+        food.removingAt = Date.now();
       }
 
-      function getBodyImage(type) {
-        if (type === "hehezi") return heheziImg;
-        if (type === "xiaobai") return xiaobaiImg;
-        if (type === "xiaomao") return xiaomaoImg;
-        return bodyImg;
+      function removeFinishedDisappearingFoods() {
+        const now = Date.now();
+        foods = foods.filter(
+          (food) =>
+            !food.removingAt || now - food.removingAt < foodDisappearDuration,
+        );
       }
 
       function addScore(value) {
@@ -437,15 +533,10 @@
 
       function startSpeedMode() {
         speedLevel = Math.min(speedLevel + 1, maxSpeedLevel);
-
         speedModeEndTime =
           Math.max(speedModeEndTime, Date.now()) + speedUpDuration;
-
-        const newDelay =
+        moveDelay =
           speedLevelDelays[speedLevel] || speedLevelDelays[maxSpeedLevel];
-
-        setGameLoop(newDelay);
-
         fillFoods();
       }
 
@@ -453,164 +544,227 @@
         if (speedLevel > 0 && Date.now() > speedModeEndTime) {
           speedLevel = 0;
           speedModeEndTime = 0;
-
-          setGameLoop(speed);
+          moveDelay = speed;
           fillFoods();
         }
       }
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowUp" && nextDir.y !== 1) nextDir = { x: 0, y: -1 };
-        if (e.key === "ArrowDown" && nextDir.y !== -1) nextDir = { x: 0, y: 1 };
-        if (e.key === "ArrowLeft" && nextDir.x !== 1) nextDir = { x: -1, y: 0 };
-        if (e.key === "ArrowRight" && nextDir.x !== -1)
-          nextDir = { x: 1, y: 0 };
-        if (e.code === "Space" && gameOver) reset();
-      });
+      function updateGameLogic() {
+        if (!gameStarted || gameOver) return;
 
-      function startGame() {
-        startBtn.style.display = "none";
-        gameStarted = true;
+        checkSpeedModeEnd();
+        markExpiredFoods();
+        fillFoods();
 
-        bgm.play().catch(() => {});
-        reset();
-      }
+        dir = nextDir;
+        directionChangedThisStep = false;
 
-      startBtn.addEventListener("click", startGame);
+        const head = wrapPoint({
+          x: snake[0].x + dir.x,
+          y: snake[0].y + dir.y,
+        });
 
-      startBtn.addEventListener(
-        "touchstart",
-        (e) => {
-          e.stopPropagation();
-          startGame();
-        },
-        { passive: true },
-      );
+        const eatenFood = foods.find(
+          (food) => food.x === head.x && food.y === head.y,
+        );
 
-      function restartGame() {
-        reset();
-      }
+        // 碰撞检测要放在食物判断之后：
+        // 没吃东西时，尾巴这一帧会离开，所以允许蛇头走到当前尾巴格子。
+        // 吃到食物时，尾巴不会离开，所以需要检查整条蛇。
+        const bodyToCheck = eatenFood ? snake : snake.slice(0, -1);
 
-      restartBtn.addEventListener("click", restartGame);
-
-      restartBtn.addEventListener(
-        "touchstart",
-        (e) => {
-          e.stopPropagation();
-          restartGame();
-        },
-        { passive: true },
-      );
-
-      restartBtn.addEventListener("click", () => {
-        reset();
-      });
-
-      let musicEnabled = true;
-
-      musicBtn.addEventListener("click", () => {
-        musicEnabled = !musicEnabled;
-
-        if (musicEnabled) {
-          bgm.play();
-          musicBtn.textContent = "🔊音乐";
-        } else {
-          bgm.pause();
-          musicBtn.textContent = "🔇静音";
+        if (bodyToCheck.some((p) => p.x === head.x && p.y === head.y)) {
+          gameOverNow(false);
+          return;
         }
-      });
 
-      // ==================== 手机滑动控制 ====================
+        if (eatenFood && eatenFood.type === FOOD_BOMB) {
+          addScorePopup(head.x * size, head.y * size, "危！", "#FF4444");
+          setTimeout(() => gameOverNow(true), 300);
+          return;
+        }
 
-      let touchStartX = 0;
-      let touchStartY = 0;
+        snake.unshift(head);
 
-      document.addEventListener(
-        "touchmove",
-        (e) => {
-          if (e.target.tagName === "BUTTON") return;
-          e.preventDefault();
+        if (eatenFood) {
+          handleEatenFood(eatenFood, head);
+        } else {
+          snake.pop();
+        }
+      }
 
-          const touchMoveX = e.touches[0].clientX;
-          const touchMoveY = e.touches[0].clientY;
+      function handleEatenFood(food, head) {
+        foods = foods.filter((f) => f !== food);
+        eatingStartTime = Date.now();
+        playSound(eatSound);
 
-          const dx = touchMoveX - touchStartX;
-          const dy = touchMoveY - touchStartY;
+        if (food.type === FOOD_NORMAL) {
+          addScore(1);
+          addScorePopup(head.x * size, head.y * size, "+1", "#ffffff");
+          bodySkins.push("body");
+        }
 
-          const minSwipeDistance = 18;
+        if (food.type === FOOD_SPEED) {
+          addScore(1);
+          addScorePopup(head.x * size, head.y * size, "⚡加速", "#4FC3F7");
+          bodySkins.push("body");
+          startSpeedMode();
+        }
 
-          if (
-            Math.abs(dx) < minSwipeDistance &&
-            Math.abs(dy) < minSwipeDistance
-          ) {
-            return;
-          }
+        if (food.type === FOOD_TRIPLE) {
+          addScore(3);
+          addScorePopup(head.x * size, head.y * size, "+3", "#FFD700");
+          bodySkins.push("hehezi", "xiaobai", "xiaomao");
+        }
 
-          if (Math.abs(dx) > Math.abs(dy)) {
-            if (dx > 0 && nextDir.x !== -1) {
-              nextDir = { x: 1, y: 0 };
-            } else if (dx < 0 && nextDir.x !== 1) {
-              nextDir = { x: -1, y: 0 };
-            }
+        while (snake.length < bodySkins.length + 1) {
+          const tail = snake[snake.length - 1];
+          snake.push(copyPoint(tail));
+        }
+
+        fillFoods();
+      }
+
+      function gameOverNow(isBomb = false) {
+        gameOver = true;
+        bombGameOver = isBomb;
+        restartBtn.style.display = "inline-block";
+        playSound(gameOverSound);
+      }
+
+      // ==================== 绘制 ====================
+      function drawGame() {
+        drawBackground();
+
+        if (gameOver) {
+          drawGameOverText();
+          return;
+        }
+
+        foods.forEach(drawFood);
+        drawSpeedInfo();
+        drawScorePopups();
+        drawSnake();
+        pulseTime += foodPulseSpeed * 0.25;
+      }
+
+      function drawBackground() {
+        const bg = bombGameOver
+          ? images.bgBomb
+          : isSpeedMode()
+            ? images.bgSpeed
+            : images.bg;
+        ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = `rgba(0,0,0,${bgMask})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function drawGameOverText() {
+        ctx.fillStyle = "white";
+        ctx.font = "32px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          bombGameOver ? "" : "熊熊很大，尼吃不下~",
+          canvas.width / 2,
+          canvas.height / 2 - 30,
+        );
+      }
+
+      function drawFood(food) {
+        const x = food.x * size;
+        const y = food.y * size;
+        const pulse = Math.sin(pulseTime) * foodPulseSize;
+        const alpha = getFoodAlpha(food);
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.shadowColor = food.type === FOOD_BOMB ? "#ff0000" : "#FFD700";
+        ctx.shadowBlur = foodGlow;
+        ctx.beginPath();
+        ctx.arc(x + size / 2, y + size / 2, size / 2 + pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = food.type === FOOD_BOMB ? "#ff3333" : "white";
+        ctx.lineWidth = foodStrokeWidth;
+        ctx.stroke();
+        drawCircleImage(getFoodImage(food.type), x, y);
+        ctx.restore();
+      }
+
+      function getFoodAlpha(food) {
+        if (!food.removingAt) return 1;
+
+        const elapsed = Date.now() - food.removingAt;
+        const fadeAlpha = Math.max(
+          1 - elapsed / foodDisappearDuration,
+          foodMinAlpha,
+        );
+        const blinkOn = Math.floor(Date.now() / foodBlinkSpeed) % 2 === 0;
+        return blinkOn ? fadeAlpha : foodMinAlpha;
+      }
+
+      function drawSpeedInfo() {
+        if (!isSpeedMode()) return;
+        ctx.save();
+        ctx.fillStyle = "white";
+        ctx.font = "22px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(`⚡ 波波的鼓励 x${speedLevel}`, 12, 30);
+        ctx.restore();
+      }
+
+      function drawScorePopups() {
+        scorePopups.forEach((popup) => {
+          drawPopup(popup);
+          popup.y -= popupRiseSpeed;
+          popup.life -= 0.8;
+        });
+        scorePopups = scorePopups.filter((popup) => popup.life > 0);
+      }
+
+      function drawSnake() {
+        snake.forEach((p, index) => {
+          const prev = prevSnake[index] || p;
+          const pos = getRenderPosition(p, prev);
+
+          if (index === 0) {
+            drawHead(pos.x, pos.y, getDirectionFromTo(prev, p));
           } else {
-            if (dy > 0 && nextDir.y !== -1) {
-              nextDir = { x: 0, y: 1 };
-            } else if (dy < 0 && nextDir.y !== 1) {
-              nextDir = { x: 0, y: -1 };
-            }
+            drawBodyPart(p, index, pos.x, pos.y);
           }
+        });
+      }
 
-          touchStartX = touchMoveX;
-          touchStartY = touchMoveY;
-        },
-        { passive: false },
-      );
+      function drawHead(x, y, direction) {
+        headTargetAngle = getAngleByDirection(direction);
+        headCurrentAngle = lerpAngle(headCurrentAngle, headTargetAngle, 0.25);
 
-      document.addEventListener(
-        "touchend",
-        (e) => {
-          if (e.target.tagName === "BUTTON") return;
-          e.preventDefault();
-        },
-        { passive: false },
-      );
+        const elapsed = Date.now() - eatingStartTime;
+        const isEating = elapsed < eatingDuration;
+        const img = isEating ? images.headEat : images.head;
+        let drawSize = size;
+        let offset = 0;
 
-      document.addEventListener(
-        "touchend",
-        (e) => {
-          e.preventDefault();
+        if (isEating) {
+          const progress = elapsed / eatingDuration;
+          const wave = Math.sin(progress * Math.PI);
+          drawSize = size * (eatHeadMinScale + wave * eatHeadScaleRange);
+          offset = (size - drawSize) / 2;
+        }
 
-          const touchEndX = e.changedTouches[0].clientX;
-          const touchEndY = e.changedTouches[0].clientY;
+        drawRotatedCircleImageByAngle(
+          img,
+          x + offset,
+          y + offset,
+          drawSize,
+          headCurrentAngle,
+        );
+      }
 
-          const dx = touchEndX - touchStartX;
-          const dy = touchEndY - touchStartY;
-
-          const minSwipeDistance = 30;
-
-          if (
-            Math.abs(dx) < minSwipeDistance &&
-            Math.abs(dy) < minSwipeDistance
-          ) {
-            return;
-          }
-
-          if (Math.abs(dx) > Math.abs(dy)) {
-            if (dx > 0 && nextDir.x !== -1) {
-              nextDir = { x: 1, y: 0 };
-            } else if (dx < 0 && nextDir.x !== 1) {
-              nextDir = { x: -1, y: 0 };
-            }
-          } else {
-            if (dy > 0 && nextDir.y !== -1) {
-              nextDir = { x: 0, y: 1 };
-            } else if (dy < 0 && nextDir.y !== 1) {
-              nextDir = { x: 0, y: -1 };
-            }
-          }
-        },
-        { passive: false },
-      );
+      function drawBodyPart(p, index, x, y) {
+        const skinType = bodySkins[index - 1] || "body";
+        const prevPart = snake[index - 1];
+        const direction = getDirectionFromTo(p, prevPart);
+        drawRotatedCircleImage(getBodyImage(skinType), x, y, size, direction);
+      }
 
       function drawCircleImage(img, x, y, drawSize = size) {
         ctx.save();
@@ -627,65 +781,6 @@
         ctx.restore();
       }
 
-      function playSound(sound) {
-        if (!musicEnabled) return;
-
-        sound.currentTime = 0;
-        sound.play().catch(() => {});
-      }
-
-      function addScorePopup(x, y, text, color = "#ffffff") {
-        scorePopups.push({
-          x,
-          y,
-          text,
-          color,
-          life: 8,
-          maxLife: 8,
-        });
-      }
-
-      function drawBackground() {
-        if (bombGameOver) {
-          ctx.drawImage(bgBombImg, 0, 0, canvas.width, canvas.height);
-        } else if (isSpeedMode()) {
-          ctx.drawImage(bgSpeedImg, 0, 0, canvas.width, canvas.height);
-        } else {
-          ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-        }
-
-        ctx.fillStyle = `rgba(0,0,0,${bgMask})`;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-
-      function drawFood(food) {
-        const foodX = food.x * size;
-        const foodY = food.y * size;
-        const pulse = Math.sin(pulseTime) * foodPulseSize;
-        const foodImg = getFoodImage(food.type);
-
-        ctx.save();
-
-        ctx.shadowColor = food.type === FOOD_BOMB ? "#ff0000" : "#FFD700";
-        ctx.shadowBlur = foodGlow;
-
-        ctx.beginPath();
-        ctx.arc(
-          foodX + size / 2,
-          foodY + size / 2,
-          size / 2 + pulse,
-          0,
-          Math.PI * 2,
-        );
-
-        ctx.strokeStyle = food.type === FOOD_BOMB ? "#ff3333" : "white";
-        ctx.lineWidth = foodStrokeWidth;
-        ctx.stroke();
-
-        ctx.restore();
-
-        drawCircleImage(foodImg, foodX, foodY);
-      }
       function drawRotatedCircleImage(
         img,
         x,
@@ -693,24 +788,13 @@
         drawSize = size,
         direction = { x: 1, y: 0 },
       ) {
-        let angle = 0;
-        if (direction.y === 1) angle = 0;
-        if (direction.x === -1) angle = Math.PI / 2;
-        if (direction.y === -1) angle = Math.PI;
-        if (direction.x === 1) angle = -Math.PI / 2;
-
-        ctx.save();
-
-        ctx.translate(x + drawSize / 2, y + drawSize / 2);
-        ctx.rotate(angle);
-
-        ctx.beginPath();
-        ctx.arc(0, 0, drawSize / 2, 0, Math.PI * 2);
-        ctx.clip();
-
-        ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
-
-        ctx.restore();
+        drawRotatedCircleImageByAngle(
+          img,
+          x,
+          y,
+          drawSize,
+          getAngleByDirection(direction),
+        );
       }
 
       function drawRotatedCircleImageByAngle(
@@ -723,13 +807,75 @@
         ctx.save();
         ctx.translate(x + drawSize / 2, y + drawSize / 2);
         ctx.rotate(angle);
-
         ctx.beginPath();
         ctx.arc(0, 0, drawSize / 2, 0, Math.PI * 2);
         ctx.clip();
-
         ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
         ctx.restore();
+      }
+
+      function drawPopup(popup) {
+        const alpha = popup.life / popup.maxLife;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = popup.color;
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = popupStrokeWidth;
+        ctx.font = `bold ${popupFontSize}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.strokeText(popup.text, popup.x + size / 2, popup.y + popupYOffset);
+        ctx.fillText(popup.text, popup.x + size / 2, popup.y + popupYOffset);
+        ctx.restore();
+      }
+
+      function addScorePopup(x, y, text, color = "#ffffff") {
+        scorePopups.push({
+          x,
+          y,
+          text,
+          color,
+          life: popupLife,
+          maxLife: popupLife,
+        });
+      }
+
+      // ==================== 工具函数 ====================
+      function copyPoint(p) {
+        return { x: p.x, y: p.y };
+      }
+
+      function wrapPoint(p) {
+        return {
+          x: (p.x + count) % count,
+          y: (p.y + count) % count,
+        };
+      }
+
+      function getWrappedDelta(to, from) {
+        let d = to - from;
+        if (d > count / 2) d -= count;
+        if (d < -count / 2) d += count;
+        return d;
+      }
+
+      function getDirectionFromTo(from, to) {
+        const dx = getWrappedDelta(to.x, from.x);
+        const dy = getWrappedDelta(to.y, from.y);
+        return { x: Math.sign(dx), y: Math.sign(dy) };
+      }
+
+      function getRenderPosition(p, prev) {
+        const dx = getWrappedDelta(p.x, prev.x);
+        const dy = getWrappedDelta(p.y, prev.y);
+        let x = prev.x + dx * moveProgress;
+        let y = prev.y + dy * moveProgress;
+
+        if (x < 0) x += count;
+        if (x >= count) x -= count;
+        if (y < 0) y += count;
+        if (y >= count) y -= count;
+
+        return { x: x * size, y: y * size };
       }
 
       function getAngleByDirection(direction) {
@@ -742,285 +888,51 @@
 
       function lerpAngle(current, target, amount) {
         let diff = target - current;
-
         while (diff > Math.PI) diff -= Math.PI * 2;
         while (diff < -Math.PI) diff += Math.PI * 2;
-
         return current + diff * amount;
       }
-      function drawPopup(popup) {
-        const alpha = popup.life / popup.maxLife;
 
-        ctx.save();
-
-        ctx.globalAlpha = alpha;
-
-        ctx.fillStyle = popup.color;
-
-        ctx.strokeStyle = "#000";
-
-        ctx.lineWidth = 4;
-
-        ctx.font = "bold 22px sans-serif";
-
-        ctx.textAlign = "center";
-
-        ctx.strokeText(popup.text, popup.x + size / 2, popup.y);
-
-        ctx.fillText(popup.text, popup.x + size / 2, popup.y);
-
-        ctx.restore();
-      }
-      function drawSpeedInfo() {
-        if (!isSpeedMode()) return;
-
-        ctx.save();
-
-        ctx.fillStyle = "white";
-        ctx.font = "22px sans-serif";
-        ctx.textAlign = "left";
-
-        ctx.fillText(`⚡ 波波的鼓励 x${speedLevel}`, 12, 30);
-
-        ctx.restore();
+      function getFoodImage(type) {
+        if (type === FOOD_SPEED) return images.bobo;
+        if (type === FOOD_TRIPLE) return images.hehezi;
+        if (type === FOOD_BOMB) return images.bob;
+        return images.body;
       }
 
-      function gameOverNow(isBomb = false) {
-        gameOver = true;
-        bombGameOver = isBomb;
-        restartBtn.style.display = "inline-block";
-        playSound(gameOverSound);
+      function getBodyImage(type) {
+        if (type === "hehezi") return images.hehezi;
+        if (type === "xiaobai") return images.xiaobai;
+        if (type === "xiaomao") return images.xiaomao;
+        return images.body;
       }
 
-      function updateGameLogic() {
-        if (!gameStarted || gameOver) return;
-
-        checkSpeedModeEnd();
-        removeExpiredBombs();
-        fillFoods();
-
-        dir = nextDir;
-
-        const head = {
-          x: snake[0].x + dir.x,
-          y: snake[0].y + dir.y,
-        };
-
-        if (head.x < 0) head.x = count - 1;
-        if (head.x >= count) head.x = 0;
-        if (head.y < 0) head.y = count - 1;
-        if (head.y >= count) head.y = 0;
-
-        if (snake.some((p) => p.x === head.x && p.y === head.y)) {
-          gameOverNow(false);
-          return;
-        }
-
-        const eatenFood = foods.find((food) => {
-          return food.x === head.x && food.y === head.y;
-        });
-
-        if (eatenFood && eatenFood.type === FOOD_BOMB) {
-          addScorePopup(head.x * size, head.y * size, "危！", "#FF4444");
-
-          setTimeout(() => {
-            gameOverNow(true);
-          }, 300);
-
-          return;
-        }
-
-        snake.unshift(head);
-
-        if (eatenFood) {
-          foods = foods.filter((food) => food !== eatenFood);
-
-          eatingStartTime = Date.now();
-          playSound(eatSound);
-
-          if (eatenFood.type === FOOD_NORMAL) {
-            addScore(1);
-            addScorePopup(head.x * size, head.y * size, "+1", "#ffffff");
-            bodySkins.push("body");
-          }
-
-          if (eatenFood.type === FOOD_SPEED) {
-            addScore(1);
-            addScorePopup(head.x * size, head.y * size, "⚡加速", "#4FC3F7");
-            bodySkins.push("body");
-            startSpeedMode();
-          }
-
-          if (eatenFood.type === FOOD_TRIPLE) {
-            addScore(3);
-            addScorePopup(head.x * size, head.y * size, "+3", "#FFD700");
-            bodySkins.push("hehezi");
-            bodySkins.push("xiaobai");
-            bodySkins.push("xiaomao");
-          }
-
-          while (snake.length < bodySkins.length + 1) {
-            const tail = snake[snake.length - 1];
-            snake.push({ x: tail.x, y: tail.y });
-          }
-
-          fillFoods();
-        } else {
-          snake.pop();
-        }
+      function playSound(sound) {
+        if (!musicEnabled) return;
+        sound.currentTime = 0;
+        sound.play().catch(() => {});
       }
 
-      function getRenderPosition(p, prev) {
-        let dx = p.x - prev.x;
-        let dy = p.y - prev.y;
-
-        if (dx > count / 2) dx -= count;
-        if (dx < -count / 2) dx += count;
-        if (dy > count / 2) dy -= count;
-        if (dy < -count / 2) dy += count;
-
-        let x = prev.x + dx * moveProgress;
-        let y = prev.y + dy * moveProgress;
-
-        if (x < 0) x += count;
-        if (x >= count) x -= count;
-        if (y < 0) y += count;
-        if (y >= count) y -= count;
-
-        return { x: x * size, y: y * size };
-      }
-
-      function drawGame() {
-        drawBackground();
-
-        if (gameOver) {
-          ctx.fillStyle = "white";
-          ctx.font = "32px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText(
-            bombGameOver ? "老板来了，游戏结束！" : "熊熊很大，尼吃不下~",
-            canvas.width / 2,
-            canvas.height / 2 - 30,
-          );
-          return;
-        }
-
-        foods.forEach(drawFood);
-        drawSpeedInfo();
-
-        scorePopups.forEach((popup) => {
-          drawPopup(popup);
-          popup.y -= 0.7;
-          popup.life -= 0.8;
-        });
-        scorePopups = scorePopups.filter((popup) => popup.life > 0);
-
-        snake.forEach((p, index) => {
-          const prev = prevSnake[index] || p;
-          const pos = getRenderPosition(p, prev);
-          const headDirection = {
-            x: p.x - prev.x,
-            y: p.y - prev.y,
-          };
-          const x = pos.x;
-          const y = pos.y;
-
-          if (index === 0) {
-            headTargetAngle = getAngleByDirection(headDirection);
-            headCurrentAngle = lerpAngle(
-              headCurrentAngle,
-              headTargetAngle,
-              0.25,
-            );
-
-            const elapsed = Date.now() - eatingStartTime;
-            const isEating = elapsed < eatingDuration;
-
-            if (isEating) {
-              const progress = elapsed / eatingDuration;
-              const wave = Math.sin(progress * Math.PI);
-              const scale = eatHeadMinScale + wave * eatHeadScaleRange;
-              const drawSize = size * scale;
-              const offset = (size - drawSize) / 2;
-
-              drawRotatedCircleImageByAngle(
-                headEatImg,
-                x + offset,
-                y + offset,
-                drawSize,
-                headCurrentAngle,
-              );
-            } else {
-              drawRotatedCircleImageByAngle(
-                headImg,
-                x,
-                y,
-                size,
-                headCurrentAngle,
-              );
-            }
-          } else {
-            const skinType = bodySkins[index - 1] || "body";
-            const prevPart = snake[index - 1];
-
-            let bodyDx = prevPart.x - p.x;
-            let bodyDy = prevPart.y - p.y;
-
-            if (bodyDx > count / 2) bodyDx -= count;
-            if (bodyDx < -count / 2) bodyDx += count;
-            if (bodyDy > count / 2) bodyDy -= count;
-            if (bodyDy < -count / 2) bodyDy += count;
-
-            const bodyDirection = {
-              x: Math.sign(bodyDx),
-              y: Math.sign(bodyDy),
-            };
-
-            drawRotatedCircleImage(
-              getBodyImage(skinType),
-              x,
-              y,
-              size,
-              bodyDirection,
-            );
-          }
-        });
-
-        pulseTime += foodPulseSpeed * 0.25;
-      }
-
+      // ==================== 动画循环 ====================
       function gameFrame(now) {
-        if (!gameStarted) {
-          animationId = requestAnimationFrame(gameFrame);
-          return;
-        }
-
-        if (!gameOver && now - lastMoveTime >= moveDelay) {
-          prevSnake = snake.map((p) => ({ ...p }));
+        if (gameStarted && !gameOver && now - lastMoveTime >= moveDelay) {
+          prevSnake = snake.map(copyPoint);
           updateGameLogic();
           lastMoveTime = now;
           moveProgress = 0;
         }
 
         moveProgress = Math.min((now - lastMoveTime) / moveDelay, 1);
-        drawGame();
-
+        if (gameStarted) drawGame();
         animationId = requestAnimationFrame(gameFrame);
       }
 
-      Promise.all([
-        new Promise((resolve) => (headImg.onload = resolve)),
-        new Promise((resolve) => (headEatImg.onload = resolve)),
-        new Promise((resolve) => (bodyImg.onload = resolve)),
-        new Promise((resolve) => (bgImg.onload = resolve)),
-        new Promise((resolve) => (bgSpeedImg.onload = resolve)),
-        new Promise((resolve) => (bgBombImg.onload = resolve)),
-        new Promise((resolve) => (boboImg.onload = resolve)),
-        new Promise((resolve) => (heheziImg.onload = resolve)),
-        new Promise((resolve) => (xiaobaiImg.onload = resolve)),
-        new Promise((resolve) => (xiaomaoImg.onload = resolve)),
-        new Promise((resolve) => (bobImg.onload = resolve)),
-      ]).then(() => {
+      // ==================== 资源加载 ====================
+      Promise.all(
+        Object.values(images).map(
+          (img) => new Promise((resolve) => (img.onload = resolve)),
+        ),
+      ).then(() => {
         drawBackground();
       });
     </script>
