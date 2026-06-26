@@ -134,7 +134,7 @@
     <div id="version"></div>
 
     <script>
-      const GAME_VERSION = "v1.4.7";
+      const GAME_VERSION = "v1.5.3d";
 
       // ==================== 调试参数 / Game Balance ====================
 
@@ -142,21 +142,50 @@
       const size = 32; // 单格大小(px)
 
       // 游戏节奏
-      const speed = 180; // 普通速度，越小越快
-      const speedUpDuration = 6000; // 波波持续时间(ms)
+      const speed = 200; // 普通速度，越小越快
+      const speedUpDuration = 3000; // 波波持续时间(ms)
+      const maxSpeedModeTime = 6000; // 波波模式最多剩余10秒
       const maxSpeedLevel = 5; // 最大加速层数
-      const speedLevelDelays = [180, 160, 140, 120, 90, 70]; // 每层速度
+      const speedLevelDelays = [200, 190, 180, 160, 130, 100]; // 每层速度
+      const scoreMultipliers = [1, 1, 2, 2, 3, 3]; // 得分倍率：第0项普通，1~5项波波层数
+      const speedInfoFontSize = 12; // 波波提示字体大小
+
+      // HR裁员模式
+      const hrModeDuration = 5000; // 裁员模式持续时间(ms)
+      const hrShrinkOnEat = 0; // 吃到HR时立即减少的身体长度
+      const hrShrinkNormal = 1; // 裁员模式吃普通食物减少长度
+      const hrShrinkBobo = 1; // 裁员模式吃波波减少长度
+      const hrShrinkHehezi = 3; // 裁员模式吃贺贺子减少长度
+      const hrShrinkHr = 1; // 裁员模式再次吃HR减少长度，不延长时间
+      const hrInfoColor = "#B388FF"; // HR裁员提示颜色
+
+      // 阿朱食物
+      const azhuScore = 3; // 阿朱基础得分
+      const azhuBodyCount = 1; // 吃阿朱增加几个阿朱身体
+      const outsourceBodyCount = 5; // 吃阿朱增加几个外包身体
+
+      // 死亡反馈
+      const deathFreezeTime = 2000; // 死亡后冻结停留时间(ms)
+      const deathSlowMotionScale = 0.35; // 死亡瞬间慢动作比例，越小越慢
+      const deathOverlayMaxAlpha = 1.0; // 死亡黑色遮罩最大透明度
+      const deathShakeDuration = 450; // 撞击后身体震动时长(ms)
+      const deathShakeStrength = 4; // 身体震动强度(px)
 
       // 食物概率（普通模式）
-      const normalFoodRate = 0.4; // 普通食物
-      const boboFoodRate = 0.2; // 波波
-      const heheziFoodRate = 0.3; // 贺贺子
-      // Bob = 0.1
+
+      const normalFoodRate = 0.3; // 普通
+      const heheziFoodRate = 0.15; // 贺贺子
+      const azhuFoodRate = 0.1; // 阿朱
+      const boboFoodRate = 0.25; // 波波
+      const hrFoodRate = 0.05; // HR，进入裁员模式
+      // Bob = 0.15
 
       // 食物概率（波波模式）
-      const speedModeNormalRate = 0.2; // 普通食物
+      const speedModeNormalRate = 0.15; // 普通
+      const speedModeHeheziRate = 0.1; // 贺贺子
+      const speedModeAzhuRate = 0.05; // 阿朱
       const speedModeBoboRate = 0.3; // 波波
-      const speedModeHeheziRate = 0.2; // 贺贺子
+      const speedModeHrRate = 0.1; // HR
       // Bob = 0.3
 
       // 食物数量
@@ -189,6 +218,15 @@
       const popupFontSize = 22; // 字体大小
       const popupStrokeWidth = 4; // 描边粗细
       const popupYOffset = 0; // Y轴偏移
+      const popupScoreColors = [
+        "#FFFFFF",
+        "#FFFFFF",
+        "#4FC3F7",
+        "#4FC3F7",
+        "#FFD700",
+        "#FFD700",
+      ];
+      const popupScoreFontSizes = [22, 22, 28, 28, 32, 32];
 
       // ==================== DOM ====================
       const canvas = document.getElementById("game");
@@ -207,6 +245,8 @@
       const FOOD_SPEED = "speed";
       const FOOD_TRIPLE = "triple";
       const FOOD_BOMB = "bomb";
+      const FOOD_HR = "hr";
+      const FOOD_AZHU = "azhu";
 
       // ==================== 资源 ====================
       const images = {
@@ -221,6 +261,9 @@
         xiaobai: loadImage("xiaobai.png"),
         xiaomao: loadImage("xiaomao.png"),
         bob: loadImage("bob.png"),
+        hr: loadImage("hr.png"),
+        azhu: loadImage("azhu.png"),
+        outsource: loadImage("outsource.png"),
       };
 
       const eatSound = new Audio("eat.mp3");
@@ -243,6 +286,9 @@
       let gameStarted = false;
       let gameOver = false;
       let bombGameOver = false;
+      let deathPending = false;
+      let deathStartTime = 0;
+      let deathIsBomb = false;
       let musicEnabled = true;
       musicBtn.textContent = "🔊音乐";
 
@@ -257,6 +303,9 @@
 
       let speedModeEndTime = 0;
       let speedLevel = 0;
+
+      let hrModeEndTime = 0;
+      let lastHrModeTick = 0;
 
       let headCurrentAngle = -Math.PI / 2;
       let headTargetAngle = -Math.PI / 2;
@@ -289,8 +338,13 @@
         score = 0;
         gameOver = false;
         bombGameOver = false;
+        deathPending = false;
+        deathStartTime = 0;
+        deathIsBomb = false;
         speedModeEndTime = 0;
         speedLevel = 0;
+        hrModeEndTime = 0;
+        lastHrModeTick = 0;
         eatingStartTime = 0;
         headCurrentAngle = -Math.PI / 2;
         headTargetAngle = -Math.PI / 2;
@@ -368,7 +422,7 @@
         "touchmove",
         (e) => {
           if (isButtonTouch(e)) return;
-          if (!gameStarted || gameOver) return;
+          if (!gameStarted || gameOver || deathPending) return;
           e.preventDefault();
 
           const touchMoveX = e.touches[0].clientX;
@@ -423,6 +477,47 @@
         return speedLevel > 0 && Date.now() <= speedModeEndTime;
       }
 
+      function isHrMode() {
+        return Date.now() <= hrModeEndTime;
+      }
+
+      function startHrMode() {
+        if (isHrMode()) return;
+        hrModeEndTime = Date.now() + hrModeDuration;
+        lastHrModeTick = Date.now();
+      }
+
+      function pauseSpeedModeDuringHr() {
+        if (!isHrMode()) {
+          lastHrModeTick = 0;
+          return;
+        }
+
+        if (speedLevel <= 0) return;
+
+        const now = Date.now();
+
+        if (lastHrModeTick > 0) {
+          speedModeEndTime += now - lastHrModeTick;
+        }
+
+        lastHrModeTick = now;
+      }
+
+      function getScoreMultiplier() {
+        return scoreMultipliers[speedLevel] || 1;
+      }
+
+      function getMultiplierColor() {
+        const level = Math.min(speedLevel, maxSpeedLevel);
+        return popupScoreColors[level];
+      }
+
+      function getMultiplierFontSize() {
+        const level = Math.min(speedLevel, maxSpeedLevel);
+        return popupScoreFontSizes[level];
+      }
+
       function getTargetFoodCount() {
         if (!isSpeedMode()) return normalFoodCount;
 
@@ -439,6 +534,23 @@
           if (r < speedModeNormalRate + speedModeBoboRate) return FOOD_SPEED;
           if (r < speedModeNormalRate + speedModeBoboRate + speedModeHeheziRate)
             return FOOD_TRIPLE;
+          if (
+            r <
+            speedModeNormalRate +
+              speedModeBoboRate +
+              speedModeHeheziRate +
+              speedModeHrRate
+          )
+            return FOOD_HR;
+          if (
+            r <
+            speedModeNormalRate +
+              speedModeBoboRate +
+              speedModeHeheziRate +
+              speedModeHrRate +
+              speedModeAzhuRate
+          )
+            return FOOD_AZHU;
           return FOOD_BOMB;
         }
 
@@ -446,6 +558,17 @@
         if (r < normalFoodRate + boboFoodRate) return FOOD_SPEED;
         if (r < normalFoodRate + boboFoodRate + heheziFoodRate)
           return FOOD_TRIPLE;
+        if (r < normalFoodRate + boboFoodRate + heheziFoodRate + hrFoodRate)
+          return FOOD_HR;
+        if (
+          r <
+          normalFoodRate +
+            boboFoodRate +
+            heheziFoodRate +
+            hrFoodRate +
+            azhuFoodRate
+        )
+          return FOOD_AZHU;
         return FOOD_BOMB;
       }
 
@@ -520,6 +643,21 @@
         );
       }
 
+      function removeTailSegments(count) {
+        for (let i = 0; i < count; i++) {
+          if (snake.length <= 1) break;
+          snake.pop();
+        }
+
+        while (bodySkins.length > snake.length - 1) {
+          bodySkins.pop();
+        }
+      }
+
+      function shrinkAfterEating(shrinkCount) {
+        removeTailSegments(1 + shrinkCount);
+      }
+
       function addScore(value) {
         score += value;
         scoreEl.textContent = score;
@@ -533,10 +671,17 @@
 
       function startSpeedMode() {
         speedLevel = Math.min(speedLevel + 1, maxSpeedLevel);
-        speedModeEndTime =
-          Math.max(speedModeEndTime, Date.now()) + speedUpDuration;
+
+        const now = Date.now();
+        const remain = Math.max(speedModeEndTime - now, 0);
+
+        const newRemain = Math.min(remain + speedUpDuration, maxSpeedModeTime);
+
+        speedModeEndTime = now + newRemain;
+
         moveDelay =
           speedLevelDelays[speedLevel] || speedLevelDelays[maxSpeedLevel];
+
         fillFoods();
       }
 
@@ -552,6 +697,7 @@
       function updateGameLogic() {
         if (!gameStarted || gameOver) return;
 
+        pauseSpeedModeDuringHr();
         checkSpeedModeEnd();
         markExpiredFoods();
         fillFoods();
@@ -574,13 +720,17 @@
         const bodyToCheck = eatenFood ? snake : snake.slice(0, -1);
 
         if (bodyToCheck.some((p) => p.x === head.x && p.y === head.y)) {
-          gameOverNow(false);
+          snake.unshift(head);
+          if (!eatenFood) snake.pop();
+          startDeath(false);
           return;
         }
 
         if (eatenFood && eatenFood.type === FOOD_BOMB) {
+          snake.unshift(head);
+          snake.pop();
           addScorePopup(head.x * size, head.y * size, "危！", "#FF4444");
-          setTimeout(() => gameOverNow(true), 300);
+          startDeath(true);
           return;
         }
 
@@ -598,22 +748,133 @@
         eatingStartTime = Date.now();
         playSound(eatSound);
 
+        if (food.type === FOOD_AZHU) {
+          if (isHrMode()) {
+            const shrinkCount = azhuBodyCount + outsourceBodyCount;
+            shrinkAfterEating(shrinkCount);
+            addScorePopup(
+              head.x * size,
+              head.y * size,
+              `-${shrinkCount}`,
+              hrInfoColor,
+              popupFontSize,
+            );
+            fillFoods();
+            return;
+          }
+
+          const point = azhuScore * getScoreMultiplier();
+          addScore(point);
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            `+${point}`,
+            getMultiplierColor(),
+            getMultiplierFontSize(),
+          );
+
+          for (let i = 0; i < azhuBodyCount; i++) {
+            bodySkins.push("azhu");
+          }
+
+          for (let i = 0; i < outsourceBodyCount; i++) {
+            bodySkins.push("outsource");
+          }
+
+          while (snake.length < bodySkins.length + 1) {
+            const tail = snake[snake.length - 1];
+            snake.push(copyPoint(tail));
+          }
+
+          fillFoods();
+          return;
+        }
+
+        if (food.type === FOOD_HR) {
+          if (!isHrMode()) {
+            startHrMode();
+            shrinkAfterEating(hrShrinkOnEat);
+            addScorePopup(
+              head.x * size,
+              head.y * size,
+              "HR裁员",
+              hrInfoColor,
+              popupFontSize,
+            );
+          } else {
+            shrinkAfterEating(hrShrinkHr);
+            addScorePopup(
+              head.x * size,
+              head.y * size,
+              `-${hrShrinkHr}`,
+              hrInfoColor,
+              popupFontSize,
+            );
+          }
+
+          fillFoods();
+          return;
+        }
+
+        if (isHrMode()) {
+          let shrinkCount = hrShrinkNormal;
+
+          if (food.type === FOOD_SPEED) shrinkCount = hrShrinkBobo;
+          if (food.type === FOOD_TRIPLE) shrinkCount = hrShrinkHehezi;
+          if (food.type === FOOD_AZHU)
+            shrinkCount = azhuBodyCount + outsourceBodyCount;
+
+          shrinkAfterEating(shrinkCount);
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            `-${shrinkCount}`,
+            hrInfoColor,
+            popupFontSize,
+          );
+          fillFoods();
+          return;
+        }
+
+        const multiplier = getScoreMultiplier();
+
         if (food.type === FOOD_NORMAL) {
-          addScore(1);
-          addScorePopup(head.x * size, head.y * size, "+1", "#ffffff");
+          const point = 1 * multiplier;
+          addScore(point);
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            `+${point}`,
+            getMultiplierColor(),
+            getMultiplierFontSize(),
+          );
           bodySkins.push("body");
         }
 
         if (food.type === FOOD_SPEED) {
-          addScore(1);
-          addScorePopup(head.x * size, head.y * size, "⚡加速", "#4FC3F7");
+          const point = 1 * multiplier;
+          addScore(point);
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            `+${point}`,
+            getMultiplierColor(),
+            getMultiplierFontSize(),
+          );
           bodySkins.push("body");
           startSpeedMode();
         }
 
         if (food.type === FOOD_TRIPLE) {
-          addScore(3);
-          addScorePopup(head.x * size, head.y * size, "+3", "#FFD700");
+          const point = 2 * multiplier;
+          addScore(point);
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            `+${point}`,
+            getMultiplierColor(),
+            getMultiplierFontSize(),
+          );
           bodySkins.push("hehezi", "xiaobai", "xiaomao");
         }
 
@@ -625,11 +886,27 @@
         fillFoods();
       }
 
-      function gameOverNow(isBomb = false) {
-        gameOver = true;
-        bombGameOver = isBomb;
-        restartBtn.style.display = "inline-block";
+      function startDeath(isBomb = false) {
+        if (deathPending || gameOver) return;
+
+        deathPending = true;
+        deathStartTime = Date.now();
+        deathIsBomb = isBomb;
+        bombGameOver = false;
+        restartBtn.style.display = "none";
         playSound(gameOverSound);
+      }
+
+      function finishDeath() {
+        deathPending = false;
+        bombGameOver = deathIsBomb;
+        gameOver = true;
+        restartBtn.style.display = "inline-block";
+      }
+
+      function gameOverNow(isBomb = false) {
+        bombGameOver = isBomb;
+        finishDeath();
       }
 
       // ==================== 绘制 ====================
@@ -645,6 +922,17 @@
         drawSpeedInfo();
         drawScorePopups();
         drawSnake();
+
+        if (deathPending) {
+          drawDeathOverlay();
+
+          if (Date.now() - deathStartTime >= deathFreezeTime) {
+            finishDeath();
+          }
+
+          return;
+        }
+
         pulseTime += foodPulseSpeed * 0.25;
       }
 
@@ -668,6 +956,31 @@
           canvas.width / 2,
           canvas.height / 2 - 30,
         );
+      }
+
+      function drawDeathOverlay() {
+        const elapsed = Date.now() - deathStartTime;
+        const progress = Math.min(elapsed / deathFreezeTime, 1);
+        const alpha = deathOverlayMaxAlpha * progress;
+
+        ctx.save();
+        ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      function getDeathShakeOffset() {
+        if (!deathPending) return { x: 0, y: 0 };
+
+        const elapsed = Date.now() - deathStartTime;
+        if (elapsed > deathShakeDuration) return { x: 0, y: 0 };
+
+        const strength =
+          deathShakeStrength * (1 - elapsed / deathShakeDuration);
+        return {
+          x: (Math.random() * 2 - 1) * strength,
+          y: (Math.random() * 2 - 1) * strength,
+        };
       }
 
       function drawFood(food) {
@@ -702,12 +1015,38 @@
       }
 
       function drawSpeedInfo() {
-        if (!isSpeedMode()) return;
         ctx.save();
-        ctx.fillStyle = "white";
-        ctx.font = "22px sans-serif";
+        ctx.font = `${speedInfoFontSize}px sans-serif`;
         ctx.textAlign = "left";
-        ctx.fillText(`⚡ 波波的鼓励 x${speedLevel}`, 12, 30);
+
+        if (isHrMode()) {
+          const remain = Math.max(
+            0,
+            Math.ceil((hrModeEndTime - Date.now()) / 1000),
+          );
+          ctx.fillStyle = hrInfoColor;
+          ctx.fillText(`👔 HR裁员中  ${remain}s`, 12, 30);
+          ctx.restore();
+          return;
+        }
+
+        if (!isSpeedMode()) {
+          ctx.restore();
+          return;
+        }
+
+        const remain = Math.max(
+          0,
+          Math.ceil((speedModeEndTime - Date.now()) / 1000),
+        );
+        const multiplier = getScoreMultiplier();
+
+        ctx.fillStyle = getMultiplierColor();
+        ctx.fillText(
+          `⚡ 波波 Lv.${speedLevel}  倍率 x${multiplier}  ${remain}s`,
+          12,
+          30,
+        );
         ctx.restore();
       }
 
@@ -721,14 +1060,18 @@
       }
 
       function drawSnake() {
+        const shake = getDeathShakeOffset();
+
         snake.forEach((p, index) => {
           const prev = prevSnake[index] || p;
           const pos = getRenderPosition(p, prev);
+          const x = pos.x + shake.x;
+          const y = pos.y + shake.y;
 
           if (index === 0) {
-            drawHead(pos.x, pos.y, getDirectionFromTo(prev, p));
+            drawHead(x, y, getDirectionFromTo(prev, p));
           } else {
-            drawBodyPart(p, index, pos.x, pos.y);
+            drawBodyPart(p, index, x, y);
           }
         });
       }
@@ -821,19 +1164,26 @@
         ctx.fillStyle = popup.color;
         ctx.strokeStyle = "#000";
         ctx.lineWidth = popupStrokeWidth;
-        ctx.font = `bold ${popupFontSize}px sans-serif`;
+        ctx.font = `bold ${popup.fontSize || popupFontSize}px sans-serif`;
         ctx.textAlign = "center";
         ctx.strokeText(popup.text, popup.x + size / 2, popup.y + popupYOffset);
         ctx.fillText(popup.text, popup.x + size / 2, popup.y + popupYOffset);
         ctx.restore();
       }
 
-      function addScorePopup(x, y, text, color = "#ffffff") {
+      function addScorePopup(
+        x,
+        y,
+        text,
+        color = "#ffffff",
+        fontSize = popupFontSize,
+      ) {
         scorePopups.push({
           x,
           y,
           text,
           color,
+          fontSize,
           life: popupLife,
           maxLife: popupLife,
         });
@@ -897,6 +1247,8 @@
         if (type === FOOD_SPEED) return images.bobo;
         if (type === FOOD_TRIPLE) return images.hehezi;
         if (type === FOOD_BOMB) return images.bob;
+        if (type === FOOD_HR) return images.hr;
+        if (type === FOOD_AZHU) return images.azhu;
         return images.body;
       }
 
@@ -904,6 +1256,8 @@
         if (type === "hehezi") return images.hehezi;
         if (type === "xiaobai") return images.xiaobai;
         if (type === "xiaomao") return images.xiaomao;
+        if (type === "azhu") return images.azhu;
+        if (type === "outsource") return images.outsource;
         return images.body;
       }
 
@@ -915,14 +1269,27 @@
 
       // ==================== 动画循环 ====================
       function gameFrame(now) {
-        if (gameStarted && !gameOver && now - lastMoveTime >= moveDelay) {
+        if (
+          gameStarted &&
+          !gameOver &&
+          !deathPending &&
+          now - lastMoveTime >= moveDelay
+        ) {
           prevSnake = snake.map(copyPoint);
           updateGameLogic();
           lastMoveTime = now;
           moveProgress = 0;
         }
 
-        moveProgress = Math.min((now - lastMoveTime) / moveDelay, 1);
+        if (deathPending) {
+          moveProgress = Math.min(
+            ((now - lastMoveTime) / moveDelay) * deathSlowMotionScale,
+            1,
+          );
+        } else {
+          moveProgress = Math.min((now - lastMoveTime) / moveDelay, 1);
+        }
+
         if (gameStarted) drawGame();
         animationId = requestAnimationFrame(gameFrame);
       }
