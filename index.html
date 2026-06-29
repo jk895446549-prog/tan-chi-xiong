@@ -12,6 +12,9 @@
       body {
         margin: 0;
         padding: 0;
+        width: 100%;
+        min-height: 100vh;
+        min-height: 100svh;
         background: #222;
         color: white;
         text-align: center;
@@ -21,12 +24,34 @@
         user-select: none;
       }
 
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #gameShell {
+        width: min(92vw, 78vh, 600px);
+        max-height: 100svh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #gameArea {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        flex: 0 0 auto;
+      }
+
       canvas {
         background: #111;
         display: block;
-        margin: 8px auto 0;
-        width: min(92vw, 78vh, 600px);
-        height: min(92vw, 78vh, 600px);
+        margin: 0 auto;
+        width: 100%;
+        height: 100%;
         touch-action: none;
       }
 
@@ -40,7 +65,7 @@
 
       #topBar,
       #bottomBar {
-        width: min(92vw, 78vh, 600px);
+        width: 100%;
         margin-left: auto;
         margin-right: auto;
         display: flex;
@@ -56,6 +81,8 @@
       #bottomBar {
         margin-top: 8px;
         margin-bottom: 8px;
+        justify-content: center;
+        flex-direction: column;
       }
 
       #gameTitle {
@@ -68,10 +95,44 @@
         font-weight: bold;
       }
 
-      #controlTips {
-        font-size: 16px;
+      #startHint {
+        position: absolute;
+        left: 50%;
+        top: calc(50% + 54px);
+        transform: translateX(-50%);
+        width: 86%;
+        font-size: 15px;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.88);
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+        z-index: 998;
+        pointer-events: none;
       }
 
+      #statusBar {
+        min-height: 26px;
+        padding: 4px 12px;
+        margin-bottom: 6px;
+        box-sizing: border-box;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.32);
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 18px;
+        text-align: center;
+        white-space: nowrap;
+        transition: color 0.12s linear;
+      }
+
+      #controlButtons {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      #pauseBtn,
+      #fullscreenBtn,
       #musicBtn {
         padding: 6px 12px;
         border-radius: 10px;
@@ -81,9 +142,9 @@
 
       #startBtn,
       #restartBtn {
-        position: fixed;
+        position: absolute;
         left: 50%;
-        top: 62%;
+        top: 50%;
         transform: translate(-50%, -50%);
         padding: 14px 30px;
         font-size: 20px;
@@ -91,15 +152,111 @@
         border-radius: 12px;
         color: white;
         z-index: 999;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
       }
 
       #startBtn {
         background: #4caf50;
       }
 
+      #startBtn:disabled {
+        background: #666;
+        cursor: default;
+        opacity: 0.85;
+      }
+
       #restartBtn {
         display: none;
         background: #ffb800;
+      }
+
+      #loadingOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background:
+          radial-gradient(
+            circle at center,
+            rgba(255, 184, 0, 0.18),
+            transparent 38%
+          ),
+          linear-gradient(180deg, #1e1e1e 0%, #101010 100%);
+        color: white;
+      }
+
+      #loadingCard {
+        width: min(82vw, 420px);
+        padding: 26px 24px 22px;
+        border-radius: 22px;
+        background: rgba(0, 0, 0, 0.42);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(6px);
+      }
+
+      #loadingTitle {
+        font-size: 34px;
+        font-weight: 900;
+        margin-bottom: 10px;
+      }
+
+      #loadingText {
+        font-size: 16px;
+        color: rgba(255, 255, 255, 0.82);
+        margin-bottom: 14px;
+      }
+
+      #loadingBarWrap {
+        width: 100%;
+        height: 18px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.16);
+        margin-bottom: 12px;
+      }
+
+      #loadingBar {
+        width: 0%;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #4caf50, #ffb800);
+        transition: width 0.2s ease;
+      }
+
+      #loadingPercent {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 12px;
+      }
+
+      #loadingAssetList {
+        max-height: 150px;
+        overflow: hidden;
+        text-align: left;
+        font-size: 13px;
+        line-height: 1.75;
+        color: rgba(255, 255, 255, 0.75);
+      }
+
+      .loadingAssetDone {
+        color: rgba(144, 238, 144, 0.95);
+      }
+
+      .loadingAssetFailed {
+        color: rgba(255, 120, 120, 0.95);
+      }
+
+      .loadingAssetCurrent {
+        color: #ffdf6e;
+      }
+
+      #loadingDevTip {
+        display: none;
+        margin-top: 12px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.48);
       }
 
       #version {
@@ -111,44 +268,220 @@
         z-index: 9999;
         pointer-events: none;
       }
+
+      @media (max-width: 640px) {
+        #gameShell {
+          width: min(94vw, 78vh);
+        }
+
+        #topBar {
+          margin-top: 0;
+          margin-bottom: 8px;
+        }
+
+        #gameTitle {
+          font-size: clamp(26px, 9vw, 44px);
+        }
+
+        #scorePanel {
+          font-size: clamp(18px, 6vw, 30px);
+        }
+
+        #statusBar {
+          min-height: 24px;
+          margin-bottom: 6px;
+          font-size: 13px;
+        }
+
+        #controlButtons {
+          width: 100%;
+          justify-content: center;
+        }
+
+        #pauseBtn,
+        #fullscreenBtn,
+        #musicBtn {
+          min-width: 54px;
+          min-height: 54px;
+          padding: 8px 12px;
+          font-size: 16px;
+          border-radius: 14px;
+          white-space: normal;
+        }
+
+        #startHint {
+          top: calc(50% + 52px);
+          font-size: 14px;
+        }
+      }
+
+      @media (orientation: landscape) and (max-height: 640px) {
+        body {
+          align-items: center;
+          justify-content: center;
+        }
+
+        #gameShell {
+          width: 100vw;
+          height: 100svh;
+          max-height: none;
+          box-sizing: border-box;
+          padding: 8px 10px;
+          display: grid;
+          grid-template-columns: min(72vw, calc(100svh - 76px)) auto;
+          grid-template-rows: auto min(72vw, calc(100svh - 76px));
+          grid-template-areas:
+            "top controls"
+            "game controls";
+          justify-content: center;
+          align-content: center;
+          align-items: center;
+          column-gap: 10px;
+          row-gap: 6px;
+        }
+
+        #topBar {
+          grid-area: top;
+          width: 100%;
+          margin: 0;
+          gap: 16px;
+        }
+
+        #gameTitle {
+          font-size: clamp(22px, 6vh, 34px);
+          line-height: 1;
+          white-space: nowrap;
+        }
+
+        #scorePanel {
+          font-size: clamp(18px, 5vh, 28px);
+          line-height: 1;
+          white-space: nowrap;
+        }
+
+        #gameArea {
+          grid-area: game;
+          width: min(72vw, calc(100svh - 76px));
+          height: min(72vw, calc(100svh - 76px));
+        }
+
+        #bottomBar {
+          grid-area: controls;
+          width: auto;
+          margin: 0;
+          align-self: center;
+          justify-self: center;
+          flex-direction: column;
+        }
+
+        #statusBar {
+          max-width: 112px;
+          min-height: 42px;
+          margin-bottom: 8px;
+          padding: 7px 8px;
+          font-size: 12px;
+          line-height: 1.25;
+          white-space: normal;
+        }
+
+        #controlButtons {
+          width: auto;
+          flex-direction: column;
+          justify-content: center;
+          gap: 8px;
+        }
+
+        #pauseBtn,
+        #fullscreenBtn,
+        #musicBtn {
+          width: 64px;
+          min-height: 54px;
+          padding: 8px 10px;
+          font-size: 15px;
+          line-height: 1.25;
+          border-radius: 14px;
+          white-space: normal;
+        }
+
+        #startBtn,
+        #restartBtn {
+          padding: 12px 26px;
+          font-size: 18px;
+        }
+
+        #startHint {
+          top: calc(50% + 50px);
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        #version {
+          right: 8px;
+          bottom: 6px;
+          font-size: 11px;
+        }
+      }
     </style>
   </head>
 
   <body>
-    <div id="topBar">
-      <div id="gameTitle">贪吃熊</div>
-      <div id="scorePanel">
-        分数：<span id="score">0</span> 最高分：<span id="bestScore">0</span>
+    <div id="gameShell">
+      <div id="topBar">
+        <div id="gameTitle">贪吃熊</div>
+        <div id="scorePanel">
+          分数：<span id="score">0</span> 最高分：<span id="bestScore">0</span>
+        </div>
+      </div>
+
+      <div id="gameArea">
+        <canvas id="game" width="384" height="384"></canvas>
+        <button id="startBtn" type="button">开始游戏</button>
+        <button id="restartBtn" type="button">重新开始</button>
+        <div id="startHint">方向键 / 滑动屏幕控制，P暂停，空格重开</div>
+      </div>
+
+      <div id="bottomBar">
+        <div id="statusBar">普通模式</div>
+        <div id="controlButtons">
+          <button id="pauseBtn" type="button">⏸ 暂停</button>
+          <button id="fullscreenBtn" type="button">⛶ 全屏</button>
+          <button id="musicBtn" type="button">🔇静音</button>
+        </div>
       </div>
     </div>
 
-    <canvas id="game" width="384" height="384"></canvas>
-
-    <div id="bottomBar">
-      <div id="controlTips">方向键，滑动屏幕控制，空格重开</div>
-      <button id="musicBtn" type="button">🔇静音</button>
+    <div id="loadingOverlay">
+      <div id="loadingCard">
+        <div id="loadingTitle">🐻 贪吃熊</div>
+        <div id="loadingText">正在加载游戏资源...</div>
+        <div id="loadingBarWrap"><div id="loadingBar"></div></div>
+        <div id="loadingPercent">0%</div>
+        <div id="loadingAssetList"></div>
+        <div id="loadingDevTip">开发模式：已开启强制加载延迟</div>
+      </div>
     </div>
 
-    <button id="startBtn" type="button">开始游戏</button>
-    <button id="restartBtn" type="button">重新开始</button>
     <div id="version"></div>
 
     <script>
-      const GAME_VERSION = "v1.5.3d";
+      const GAME_VERSION = "v1.6.3";
 
       // ==================== 调试参数 / Game Balance ====================
+
+      // 开发模式
+      const DEBUG_LOADING = false; // true：强制显示加载页，方便测试；发布时改成 false
+      const DEBUG_LOADING_DELAY = 2000; // 开发模式下，资源加载完成后额外停留时间(ms)
 
       // 地图
       const size = 32; // 单格大小(px)
 
       // 游戏节奏
       const speed = 200; // 普通速度，越小越快
-      const speedUpDuration = 3000; // 波波持续时间(ms)
-      const maxSpeedModeTime = 6000; // 波波模式最多剩余10秒
       const maxSpeedLevel = 5; // 最大加速层数
+      const speedLevelDurations = [0, 5000, 3000, 3000, 3000, 5000]; // 第0项不用，Lv1=5秒，Lv2~4=3秒，MAX=5秒
       const speedLevelDelays = [200, 190, 180, 160, 130, 100]; // 每层速度
-      const scoreMultipliers = [1, 1, 2, 2, 3, 3]; // 得分倍率：第0项普通，1~5项波波层数
-      const speedInfoFontSize = 12; // 波波提示字体大小
+      const scoreMultipliers = [1, 1, 2, 2, 3, 4]; // 得分倍率：第0项普通，1~5项波波层数，MAX为4倍
+      const speedInfoFontSize = 12; // 状态栏字体大小
 
       // HR裁员模式
       const hrModeDuration = 5000; // 裁员模式持续时间(ms)
@@ -159,8 +492,12 @@
       const hrShrinkHr = 1; // 裁员模式再次吃HR减少长度，不延长时间
       const hrInfoColor = "#B388FF"; // HR裁员提示颜色
 
-      // 阿朱食物
+      // 食物得分
+      const normalFoodScore = 1; // 普通食物基础得分
+      const heheziScore = 2; // 贺贺子基础得分
       const azhuScore = 3; // 阿朱基础得分
+
+      // 阿朱食物
       const azhuBodyCount = 1; // 吃阿朱增加几个阿朱身体
       const outsourceBodyCount = 5; // 吃阿朱增加几个外包身体
 
@@ -195,6 +532,8 @@
       // 食物消失
       const foodLifeRandomOffset = 5000; // 食物出生时间随机偏移，避免一起消失
       const bombLifeTime = 6000; // Bob存活时间(ms)
+      const bobWarningDuration = 1200; // Bob淡入预警时间(ms)，结束后才会致死
+      const bobWarningMinAlpha = 0.18; // Bob刚出现时的最低透明度
       const normalFoodLifeTime = 12000; // 普通食物存在时间(ms)
       const foodDisappearDuration = 800; // 消失动画时长(ms)
       const foodBlinkSpeed = 160; // 闪烁速度
@@ -235,9 +574,22 @@
       const bestScoreEl = document.getElementById("bestScore");
       const restartBtn = document.getElementById("restartBtn");
       const startBtn = document.getElementById("startBtn");
+      const pauseBtn = document.getElementById("pauseBtn");
+      const fullscreenBtn = document.getElementById("fullscreenBtn");
       const musicBtn = document.getElementById("musicBtn");
+      const statusBar = document.getElementById("statusBar");
+      const startHint = document.getElementById("startHint");
       const versionEl = document.getElementById("version");
+      const loadingOverlay = document.getElementById("loadingOverlay");
+      const loadingText = document.getElementById("loadingText");
+      const loadingBar = document.getElementById("loadingBar");
+      const loadingPercent = document.getElementById("loadingPercent");
+      const loadingAssetList = document.getElementById("loadingAssetList");
+      const loadingDevTip = document.getElementById("loadingDevTip");
       versionEl.textContent = GAME_VERSION;
+      startBtn.disabled = true;
+      startBtn.textContent = "资源加载中 0%";
+      loadingDevTip.style.display = DEBUG_LOADING ? "block" : "none";
 
       // ==================== 常量 ====================
       const count = canvas.width / size;
@@ -285,11 +637,14 @@
 
       let gameStarted = false;
       let gameOver = false;
+      let gamePaused = false;
+      let pauseStartTime = 0;
       let bombGameOver = false;
       let deathPending = false;
       let deathStartTime = 0;
       let deathIsBomb = false;
       let musicEnabled = true;
+      let assetsLoaded = false;
       musicBtn.textContent = "🔊音乐";
 
       let animationId = null;
@@ -337,6 +692,9 @@
 
         score = 0;
         gameOver = false;
+        gamePaused = false;
+        pauseStartTime = 0;
+        updatePauseButton();
         bombGameOver = false;
         deathPending = false;
         deathStartTime = 0;
@@ -359,10 +717,13 @@
         }
       }
 
-      function startGame() {
+      async function startGame() {
+        if (!assetsLoaded) return;
         if (gameStarted && !gameOver) return;
         startBtn.style.display = "none";
+        startHint.style.display = "none";
         gameStarted = true;
+        await requestFullscreenIfPossible();
         bgm.play().catch(() => {});
         reset();
       }
@@ -382,6 +743,58 @@
         }
       }
 
+      function togglePause() {
+        if (!gameStarted || gameOver || deathPending || !assetsLoaded) return;
+
+        gamePaused = !gamePaused;
+
+        if (gamePaused) {
+          pauseStartTime = Date.now();
+          bgm.pause();
+        } else {
+          lastMoveTime = performance.now();
+          if (musicEnabled) bgm.play().catch(() => {});
+        }
+
+        updatePauseButton();
+      }
+
+      function updatePauseButton() {
+        pauseBtn.textContent = gamePaused ? "▶ 继续" : "⏸ 暂停";
+      }
+
+      function getGameTime() {
+        return gamePaused ? pauseStartTime : Date.now();
+      }
+
+      async function requestFullscreenIfPossible() {
+        if (!document.fullscreenEnabled || document.fullscreenElement) return;
+        try {
+          await document.documentElement.requestFullscreen();
+        } catch (e) {
+          console.log("全屏请求被浏览器拒绝", e);
+        }
+      }
+
+      async function toggleFullscreen() {
+        if (!document.fullscreenEnabled) return;
+        try {
+          if (document.fullscreenElement) {
+            await document.exitFullscreen();
+          } else {
+            await document.documentElement.requestFullscreen();
+          }
+        } catch (e) {
+          console.log("全屏切换失败", e);
+        }
+      }
+
+      function updateFullscreenButton() {
+        fullscreenBtn.textContent = document.fullscreenElement
+          ? "↙ 退出"
+          : "⛶ 全屏";
+      }
+
       // ==================== 输入控制 ====================
       function bindTap(button, handler) {
         button.addEventListener("click", handler);
@@ -398,7 +811,16 @@
 
       bindTap(startBtn, startGame);
       bindTap(restartBtn, restartGame);
+      bindTap(pauseBtn, togglePause);
+      bindTap(fullscreenBtn, toggleFullscreen);
       bindTap(musicBtn, toggleMusic);
+
+      if (!document.fullscreenEnabled) {
+        fullscreenBtn.style.display = "none";
+      }
+      document.addEventListener("fullscreenchange", updateFullscreenButton);
+      updateFullscreenButton();
+      updatePauseButton();
 
       document.addEventListener("keydown", (e) => {
         if (e.key === "ArrowUp") setNextDirection(0, -1);
@@ -406,6 +828,7 @@
         if (e.key === "ArrowLeft") setNextDirection(-1, 0);
         if (e.key === "ArrowRight") setNextDirection(1, 0);
         if (e.code === "Space" && gameOver) restartGame();
+        if (e.key === "p" || e.key === "P") togglePause();
       });
 
       document.addEventListener(
@@ -474,17 +897,17 @@
 
       // ==================== 游戏逻辑 ====================
       function isSpeedMode() {
-        return speedLevel > 0 && Date.now() <= speedModeEndTime;
+        return speedLevel > 0 && getGameTime() <= speedModeEndTime;
       }
 
       function isHrMode() {
-        return Date.now() <= hrModeEndTime;
+        return getGameTime() <= hrModeEndTime;
       }
 
       function startHrMode() {
         if (isHrMode()) return;
-        hrModeEndTime = Date.now() + hrModeDuration;
-        lastHrModeTick = Date.now();
+        hrModeEndTime = getGameTime() + hrModeDuration;
+        lastHrModeTick = getGameTime();
       }
 
       function pauseSpeedModeDuringHr() {
@@ -495,7 +918,7 @@
 
         if (speedLevel <= 0) return;
 
-        const now = Date.now();
+        const now = getGameTime();
 
         if (lastHrModeTick > 0) {
           speedModeEndTime += now - lastHrModeTick;
@@ -508,7 +931,21 @@
         return scoreMultipliers[speedLevel] || 1;
       }
 
+      function isMaxSpeedMode() {
+        return speedLevel >= maxSpeedLevel && isSpeedMode();
+      }
+
+      function getRainbowColor() {
+        const hue = (getGameTime() * 0.18) % 360;
+        return `hsl(${hue}, 100%, 62%)`;
+      }
+
+      function resolveDrawColor(color) {
+        return color === "rainbow" ? getRainbowColor() : color;
+      }
+
       function getMultiplierColor() {
+        if (isMaxSpeedMode()) return "rainbow";
         const level = Math.min(speedLevel, maxSpeedLevel);
         return popupScoreColors[level];
       }
@@ -575,11 +1012,17 @@
       function createOneFood() {
         let food;
         do {
+          const type = randomFoodType();
+          const now = getGameTime();
           food = {
             x: Math.floor(Math.random() * count),
             y: Math.floor(Math.random() * count),
-            type: randomFoodType(),
-            createdAt: Date.now() - Math.random() * foodLifeRandomOffset,
+            type,
+            createdAt:
+              type === FOOD_BOMB
+                ? now
+                : now - Math.random() * foodLifeRandomOffset,
+            warningStartedAt: type === FOOD_BOMB ? now : 0,
           };
         } while (isOccupied(food.x, food.y));
         return food;
@@ -612,7 +1055,7 @@
       }
 
       function markExpiredFoods() {
-        const now = Date.now();
+        const now = getGameTime();
 
         foods.forEach((food) => {
           if (food.removingAt) return;
@@ -632,11 +1075,11 @@
 
       function markFoodRemoving(food) {
         if (!food || food.removingAt) return;
-        food.removingAt = Date.now();
+        food.removingAt = getGameTime();
       }
 
       function removeFinishedDisappearingFoods() {
-        const now = Date.now();
+        const now = getGameTime();
         foods = foods.filter(
           (food) =>
             !food.removingAt || now - food.removingAt < foodDisappearDuration,
@@ -671,31 +1114,45 @@
 
       function startSpeedMode() {
         speedLevel = Math.min(speedLevel + 1, maxSpeedLevel);
-
-        const now = Date.now();
-        const remain = Math.max(speedModeEndTime - now, 0);
-
-        const newRemain = Math.min(remain + speedUpDuration, maxSpeedModeTime);
-
-        speedModeEndTime = now + newRemain;
-
-        moveDelay =
-          speedLevelDelays[speedLevel] || speedLevelDelays[maxSpeedLevel];
-
+        speedModeEndTime = getGameTime() + getSpeedLevelDuration(speedLevel);
+        updateSpeedModeDelay();
+        updateModeStatus();
         fillFoods();
       }
 
+      function getSpeedLevelDuration(level) {
+        return speedLevelDurations[level] || speedLevelDurations[maxSpeedLevel];
+      }
+
       function checkSpeedModeEnd() {
-        if (speedLevel > 0 && Date.now() > speedModeEndTime) {
+        if (speedLevel <= 0 || getGameTime() <= speedModeEndTime) return;
+
+        if (speedLevel >= maxSpeedLevel) {
+          speedLevel = 0;
+        } else {
+          speedLevel -= 1;
+        }
+
+        if (speedLevel <= 0) {
           speedLevel = 0;
           speedModeEndTime = 0;
           moveDelay = speed;
-          fillFoods();
+        } else {
+          speedModeEndTime = getGameTime() + getSpeedLevelDuration(speedLevel);
+          updateSpeedModeDelay();
         }
+
+        updateModeStatus();
+        fillFoods();
+      }
+
+      function updateSpeedModeDelay() {
+        moveDelay =
+          speedLevelDelays[speedLevel] || speedLevelDelays[maxSpeedLevel];
       }
 
       function updateGameLogic() {
-        if (!gameStarted || gameOver) return;
+        if (!gameStarted || gameOver || gamePaused) return;
 
         pauseSpeedModeDuringHr();
         checkSpeedModeEnd();
@@ -710,9 +1167,17 @@
           y: snake[0].y + dir.y,
         });
 
-        const eatenFood = foods.find(
+        const foundFood = foods.find(
           (food) => food.x === head.x && food.y === head.y,
         );
+
+        // Bob淡入预警期内只是危险提示，不会致死，也不会被吃掉。
+        const eatenFood =
+          foundFood &&
+          foundFood.type === FOOD_BOMB &&
+          !isBobDangerous(foundFood)
+            ? null
+            : foundFood;
 
         // 碰撞检测要放在食物判断之后：
         // 没吃东西时，尾巴这一帧会离开，所以允许蛇头走到当前尾巴格子。
@@ -745,7 +1210,7 @@
 
       function handleEatenFood(food, head) {
         foods = foods.filter((f) => f !== food);
-        eatingStartTime = Date.now();
+        eatingStartTime = getGameTime();
         playSound(eatSound);
 
         if (food.type === FOOD_AZHU) {
@@ -839,7 +1304,7 @@
         const multiplier = getScoreMultiplier();
 
         if (food.type === FOOD_NORMAL) {
-          const point = 1 * multiplier;
+          const point = normalFoodScore * multiplier;
           addScore(point);
           addScorePopup(
             head.x * size,
@@ -852,7 +1317,7 @@
         }
 
         if (food.type === FOOD_SPEED) {
-          const point = 1 * multiplier;
+          const point = normalFoodScore * multiplier;
           addScore(point);
           addScorePopup(
             head.x * size,
@@ -866,7 +1331,7 @@
         }
 
         if (food.type === FOOD_TRIPLE) {
-          const point = 2 * multiplier;
+          const point = heheziScore * multiplier;
           addScore(point);
           addScorePopup(
             head.x * size,
@@ -890,7 +1355,7 @@
         if (deathPending || gameOver) return;
 
         deathPending = true;
-        deathStartTime = Date.now();
+        deathStartTime = getGameTime();
         deathIsBomb = isBomb;
         bombGameOver = false;
         restartBtn.style.display = "none";
@@ -919,14 +1384,19 @@
         }
 
         foods.forEach(drawFood);
-        drawSpeedInfo();
+        updateModeStatus();
         drawScorePopups();
         drawSnake();
+
+        if (gamePaused) {
+          drawPauseOverlay();
+          return;
+        }
 
         if (deathPending) {
           drawDeathOverlay();
 
-          if (Date.now() - deathStartTime >= deathFreezeTime) {
+          if (getGameTime() - deathStartTime >= deathFreezeTime) {
             finishDeath();
           }
 
@@ -959,7 +1429,7 @@
       }
 
       function drawDeathOverlay() {
-        const elapsed = Date.now() - deathStartTime;
+        const elapsed = getGameTime() - deathStartTime;
         const progress = Math.min(elapsed / deathFreezeTime, 1);
         const alpha = deathOverlayMaxAlpha * progress;
 
@@ -969,10 +1439,28 @@
         ctx.restore();
       }
 
+      function drawPauseOverlay() {
+        ctx.save();
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.font = "bold 34px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("已暂停", canvas.width / 2, canvas.height / 2 - 10);
+        ctx.font = "16px sans-serif";
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.fillText(
+          "点击继续按钮恢复游戏",
+          canvas.width / 2,
+          canvas.height / 2 + 24,
+        );
+        ctx.restore();
+      }
+
       function getDeathShakeOffset() {
         if (!deathPending) return { x: 0, y: 0 };
 
-        const elapsed = Date.now() - deathStartTime;
+        const elapsed = getGameTime() - deathStartTime;
         if (elapsed > deathShakeDuration) return { x: 0, y: 0 };
 
         const strength =
@@ -988,66 +1476,95 @@
         const y = food.y * size;
         const pulse = Math.sin(pulseTime) * foodPulseSize;
         const alpha = getFoodAlpha(food);
+        const ringColor = resolveDrawColor(getFoodRingColor(food));
 
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.shadowColor = food.type === FOOD_BOMB ? "#ff0000" : "#FFD700";
+        ctx.shadowColor = ringColor;
         ctx.shadowBlur = foodGlow;
         ctx.beginPath();
         ctx.arc(x + size / 2, y + size / 2, size / 2 + pulse, 0, Math.PI * 2);
-        ctx.strokeStyle = food.type === FOOD_BOMB ? "#ff3333" : "white";
+        ctx.strokeStyle = ringColor;
         ctx.lineWidth = foodStrokeWidth;
         ctx.stroke();
         drawCircleImage(getFoodImage(food.type), x, y);
         ctx.restore();
       }
 
-      function getFoodAlpha(food) {
-        if (!food.removingAt) return 1;
+      function getFoodRingColor(food) {
+        if (food.type === FOOD_BOMB) return "#FF4444";
+        if (food.type === FOOD_HR || isHrMode()) return hrInfoColor;
+        return getMultiplierColor();
+      }
 
-        const elapsed = Date.now() - food.removingAt;
+      function getFoodAlpha(food) {
+        let alpha = 1;
+
+        if (food.type === FOOD_BOMB) {
+          alpha *= getBobWarningAlpha(food);
+        }
+
+        if (!food.removingAt) return alpha;
+
+        const elapsed = getGameTime() - food.removingAt;
         const fadeAlpha = Math.max(
           1 - elapsed / foodDisappearDuration,
           foodMinAlpha,
         );
-        const blinkOn = Math.floor(Date.now() / foodBlinkSpeed) % 2 === 0;
-        return blinkOn ? fadeAlpha : foodMinAlpha;
+        const blinkOn = Math.floor(getGameTime() / foodBlinkSpeed) % 2 === 0;
+        return alpha * (blinkOn ? fadeAlpha : foodMinAlpha);
       }
 
-      function drawSpeedInfo() {
-        ctx.save();
-        ctx.font = `${speedInfoFontSize}px sans-serif`;
-        ctx.textAlign = "left";
+      function getBobWarningAlpha(food) {
+        if (food.type !== FOOD_BOMB) return 1;
+
+        const elapsed =
+          getGameTime() - (food.warningStartedAt || food.createdAt);
+        const progress = Math.min(elapsed / bobWarningDuration, 1);
+        return bobWarningMinAlpha + (1 - bobWarningMinAlpha) * progress;
+      }
+
+      function isBobDangerous(food) {
+        if (!food || food.type !== FOOD_BOMB) return false;
+        return (
+          getGameTime() - (food.warningStartedAt || food.createdAt) >=
+          bobWarningDuration
+        );
+      }
+
+      function updateModeStatus() {
+        if (!statusBar) return;
 
         if (isHrMode()) {
           const remain = Math.max(
             0,
-            Math.ceil((hrModeEndTime - Date.now()) / 1000),
+            Math.ceil((hrModeEndTime - getGameTime()) / 1000),
           );
-          ctx.fillStyle = hrInfoColor;
-          ctx.fillText(`👔 HR裁员中  ${remain}s`, 12, 30);
-          ctx.restore();
+          statusBar.textContent = `👔 HR裁员中  ${remain}s`;
+          statusBar.style.color = hrInfoColor;
           return;
         }
 
         if (!isSpeedMode()) {
-          ctx.restore();
+          statusBar.textContent = "普通模式";
+          statusBar.style.color = "rgba(255, 255, 255, 0.78)";
           return;
         }
 
         const remain = Math.max(
           0,
-          Math.ceil((speedModeEndTime - Date.now()) / 1000),
+          Math.ceil((speedModeEndTime - getGameTime()) / 1000),
         );
         const multiplier = getScoreMultiplier();
 
-        ctx.fillStyle = getMultiplierColor();
-        ctx.fillText(
-          `⚡ 波波 Lv.${speedLevel}  倍率 x${multiplier}  ${remain}s`,
-          12,
-          30,
-        );
-        ctx.restore();
+        if (isMaxSpeedMode()) {
+          statusBar.textContent = `🔥 MAX 波波！ 倍率 x${multiplier}  ${remain}s`;
+          statusBar.style.color = getRainbowColor();
+          return;
+        }
+
+        statusBar.textContent = `⚡ 波波 Lv.${speedLevel}  倍率 x${multiplier}  ${remain}s后降层`;
+        statusBar.style.color = resolveDrawColor(getMultiplierColor());
       }
 
       function drawScorePopups() {
@@ -1080,7 +1597,7 @@
         headTargetAngle = getAngleByDirection(direction);
         headCurrentAngle = lerpAngle(headCurrentAngle, headTargetAngle, 0.25);
 
-        const elapsed = Date.now() - eatingStartTime;
+        const elapsed = getGameTime() - eatingStartTime;
         const isEating = elapsed < eatingDuration;
         const img = isEating ? images.headEat : images.head;
         let drawSize = size;
@@ -1091,6 +1608,21 @@
           const wave = Math.sin(progress * Math.PI);
           drawSize = size * (eatHeadMinScale + wave * eatHeadScaleRange);
           offset = (size - drawSize) / 2;
+        }
+
+        if (isMaxSpeedMode()) {
+          ctx.save();
+          ctx.shadowColor = getRainbowColor();
+          ctx.shadowBlur = 25;
+          drawRotatedCircleImageByAngle(
+            img,
+            x + offset,
+            y + offset,
+            drawSize,
+            headCurrentAngle,
+          );
+          ctx.restore();
+          return;
         }
 
         drawRotatedCircleImageByAngle(
@@ -1161,7 +1693,7 @@
         const alpha = popup.life / popup.maxLife;
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = popup.color;
+        ctx.fillStyle = resolveDrawColor(popup.color);
         ctx.strokeStyle = "#000";
         ctx.lineWidth = popupStrokeWidth;
         ctx.font = `bold ${popup.fontSize || popupFontSize}px sans-serif`;
@@ -1273,6 +1805,7 @@
           gameStarted &&
           !gameOver &&
           !deathPending &&
+          !gamePaused &&
           now - lastMoveTime >= moveDelay
         ) {
           prevSnake = snake.map(copyPoint);
@@ -1281,7 +1814,9 @@
           moveProgress = 0;
         }
 
-        if (deathPending) {
+        if (gamePaused) {
+          moveProgress = moveProgress;
+        } else if (deathPending) {
           moveProgress = Math.min(
             ((now - lastMoveTime) / moveDelay) * deathSlowMotionScale,
             1,
@@ -1295,11 +1830,180 @@
       }
 
       // ==================== 资源加载 ====================
-      Promise.all(
-        Object.values(images).map(
-          (img) => new Promise((resolve) => (img.onload = resolve)),
-        ),
-      ).then(() => {
+      const assetDisplayNames = {
+        head: "熊头",
+        headEat: "吃东西表情",
+        body: "普通身体",
+        bg: "普通背景",
+        bgSpeed: "波波背景",
+        bgBomb: "Bob结局背景",
+        bobo: "波波",
+        hehezi: "贺贺子",
+        xiaobai: "小白身体",
+        xiaomao: "小毛身体",
+        bob: "Bob危险食物",
+        hr: "HR裁员食物",
+        azhu: "阿朱食物",
+        outsource: "外包身体",
+      };
+
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      function drawLoadingScreen(progress, currentName = "") {
+        ctx.save();
+        ctx.fillStyle = "#111";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "rgba(255,184,0,0.12)";
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2 - 30, 115, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 28px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("🐻 贪吃熊", canvas.width / 2, canvas.height / 2 - 58);
+
+        ctx.font = "16px sans-serif";
+        ctx.fillText(
+          "正在加载游戏资源...",
+          canvas.width / 2,
+          canvas.height / 2 - 24,
+        );
+
+        const barX = 72;
+        const barY = canvas.height / 2 + 4;
+        const barW = canvas.width - barX * 2;
+        const barH = 14;
+        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        roundRect(barX, barY, barW, barH, 7);
+        ctx.fill();
+        ctx.fillStyle = "#ffb800";
+        roundRect(barX, barY, barW * (progress / 100), barH, 7);
+        ctx.fill();
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 18px sans-serif";
+        ctx.fillText(`${progress}%`, canvas.width / 2, canvas.height / 2 + 45);
+
+        if (currentName) {
+          ctx.font = "12px sans-serif";
+          ctx.fillStyle = "rgba(255,255,255,0.6)";
+          ctx.fillText(
+            `正在加载：${currentName}`,
+            canvas.width / 2,
+            canvas.height / 2 + 68,
+          );
+        }
+
+        ctx.restore();
+      }
+
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function updateLoadingUI(progress, currentName = "", assetStates = {}) {
+        startBtn.textContent = `资源加载中 ${progress}%`;
+        loadingBar.style.width = `${progress}%`;
+        loadingPercent.textContent = `${progress}%`;
+
+        if (progress >= 100) {
+          loadingText.textContent = "资源加载完成，准备开始！";
+        } else if (currentName) {
+          loadingText.textContent = `正在加载：${currentName}`;
+        } else {
+          loadingText.textContent = "正在加载游戏资源...";
+        }
+
+        const rows = Object.entries(assetDisplayNames)
+          .map(([key, label]) => {
+            const state = assetStates[key] || "pending";
+            if (state === "done") {
+              return `<div class="loadingAssetDone">✔ ${label}</div>`;
+            }
+            if (state === "failed") {
+              return `<div class="loadingAssetFailed">✘ ${label} 加载失败</div>`;
+            }
+            if (state === "current") {
+              return `<div class="loadingAssetCurrent">⏳ ${label}</div>`;
+            }
+            return `<div>○ ${label}</div>`;
+          })
+          .join("");
+
+        loadingAssetList.innerHTML = rows;
+        drawLoadingScreen(progress, currentName);
+      }
+
+      function preloadImages() {
+        const imageList = Object.entries(images);
+        const total = imageList.length;
+        const assetStates = {};
+        let loaded = 0;
+
+        updateLoadingUI(0, "", assetStates);
+
+        return Promise.all(
+          imageList.map(
+            ([name, img]) =>
+              new Promise((resolve) => {
+                const displayName = assetDisplayNames[name] || name;
+                assetStates[name] = "current";
+                updateLoadingUI(
+                  Math.round((loaded / total) * 100),
+                  displayName,
+                  assetStates,
+                );
+
+                function finish(success) {
+                  loaded += 1;
+                  assetStates[name] = success ? "done" : "failed";
+                  const progress = Math.round((loaded / total) * 100);
+                  updateLoadingUI(progress, displayName, assetStates);
+                  resolve();
+                }
+
+                if (img.complete && img.naturalWidth > 0) {
+                  finish(true);
+                  return;
+                }
+
+                img.onload = () => finish(true);
+                img.onerror = () => {
+                  console.warn(`图片加载失败: ${name}`, img.src);
+                  finish(false);
+                };
+              }),
+          ),
+        );
+      }
+
+      preloadImages().then(async () => {
+        updateLoadingUI(100);
+
+        if (DEBUG_LOADING) {
+          await sleep(DEBUG_LOADING_DELAY);
+        } else {
+          await sleep(350);
+        }
+
+        assetsLoaded = true;
+        startBtn.disabled = false;
+        startBtn.textContent = "开始游戏";
+        loadingOverlay.style.display = "none";
         drawBackground();
       });
     </script>
