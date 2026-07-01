@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>贪吃熊</title>
+    <title>打工人生存法则——贪吃经理</title>
     <style>
       html,
       body {
@@ -28,6 +28,16 @@
         display: flex;
         align-items: center;
         justify-content: center;
+      }
+
+      body.gameActive {
+        align-items: center;
+        justify-content: center;
+      }
+
+      body.gameActive #topBar {
+        margin-top: 0;
+        margin-bottom: 6px;
       }
 
       #gameShell {
@@ -76,6 +86,7 @@
       #topBar {
         margin-top: 10px;
         margin-bottom: 6px;
+        justify-content: center;
       }
 
       #bottomBar {
@@ -83,11 +94,6 @@
         margin-bottom: 8px;
         justify-content: center;
         flex-direction: column;
-      }
-
-      #gameTitle {
-        font-size: 34px;
-        font-weight: bold;
       }
 
       #scorePanel {
@@ -110,19 +116,27 @@
       }
 
       #statusBar {
-        min-height: 26px;
-        padding: 4px 12px;
+        width: 100%;
+        max-width: 100%;
+        height: 32px;
+        min-height: 32px;
+        max-height: 32px;
+        padding: 5px 12px;
         margin-bottom: 6px;
         box-sizing: border-box;
         border-radius: 999px;
-        background: rgba(0, 0, 0, 0.32);
-        color: rgba(255, 255, 255, 0.78);
+        background: rgba(0, 0, 0, 0.42);
+        color: rgba(255, 255, 255, 0.86);
         font-size: 14px;
         font-weight: bold;
-        line-height: 18px;
+        line-height: 22px;
         text-align: center;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         transition: color 0.12s linear;
+        pointer-events: none;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
       }
 
       #controlButtons {
@@ -232,12 +246,7 @@
       }
 
       #loadingAssetList {
-        max-height: 150px;
-        overflow: hidden;
-        text-align: left;
-        font-size: 13px;
-        line-height: 1.75;
-        color: rgba(255, 255, 255, 0.75);
+        display: none;
       }
 
       .loadingAssetDone {
@@ -279,18 +288,17 @@
           margin-bottom: 8px;
         }
 
-        #gameTitle {
-          font-size: clamp(26px, 9vw, 44px);
-        }
-
         #scorePanel {
           font-size: clamp(18px, 6vw, 30px);
         }
 
         #statusBar {
-          min-height: 24px;
+          height: 30px;
+          min-height: 30px;
+          max-height: 30px;
           margin-bottom: 6px;
           font-size: 13px;
+          line-height: 20px;
         }
 
         #controlButtons {
@@ -347,12 +355,6 @@
           gap: 16px;
         }
 
-        #gameTitle {
-          font-size: clamp(22px, 6vh, 34px);
-          line-height: 1;
-          white-space: nowrap;
-        }
-
         #scorePanel {
           font-size: clamp(18px, 5vh, 28px);
           line-height: 1;
@@ -375,13 +377,18 @@
         }
 
         #statusBar {
-          max-width: 112px;
-          min-height: 42px;
+          width: 132px;
+          max-width: 132px;
+          height: 28px;
+          min-height: 28px;
+          max-height: 28px;
           margin-bottom: 8px;
-          padding: 7px 8px;
+          padding: 4px 8px;
           font-size: 12px;
-          line-height: 1.25;
-          white-space: normal;
+          line-height: 20px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         #controlButtons {
@@ -427,11 +434,12 @@
   <body>
     <div id="gameShell">
       <div id="topBar">
-        <div id="gameTitle">贪吃熊</div>
         <div id="scorePanel">
           分数：<span id="score">0</span> 最高分：<span id="bestScore">0</span>
         </div>
       </div>
+
+      <div id="statusBar">☕ 正常上班</div>
 
       <div id="gameArea">
         <canvas id="game" width="384" height="384"></canvas>
@@ -441,7 +449,6 @@
       </div>
 
       <div id="bottomBar">
-        <div id="statusBar">普通模式</div>
         <div id="controlButtons">
           <button id="pauseBtn" type="button">⏸ 暂停</button>
           <button id="fullscreenBtn" type="button">⛶ 全屏</button>
@@ -452,7 +459,7 @@
 
     <div id="loadingOverlay">
       <div id="loadingCard">
-        <div id="loadingTitle">🐻 贪吃熊</div>
+        <div id="loadingTitle">👔 打工人生存法则——贪吃经理</div>
         <div id="loadingText">正在加载游戏资源...</div>
         <div id="loadingBarWrap"><div id="loadingBar"></div></div>
         <div id="loadingPercent">0%</div>
@@ -464,42 +471,59 @@
     <div id="version"></div>
 
     <script>
-      const GAME_VERSION = "v1.6.3";
+      const GAME_VERSION = "v1.8.5";
 
       // ==================== 调试参数 / Game Balance ====================
 
       // 开发模式
       const DEBUG_LOADING = false; // true：强制显示加载页，方便测试；发布时改成 false
-      const DEBUG_LOADING_DELAY = 2000; // 开发模式下，资源加载完成后额外停留时间(ms)
+      const DEBUG_LOADING_DELAY = 5000; // 开发模式下，资源加载完成后额外停留时间(ms)
 
       // 地图
       const size = 32; // 单格大小(px)
 
       // 游戏节奏
       const speed = 200; // 普通速度，越小越快
-      const maxSpeedLevel = 5; // 最大加速层数
-      const speedLevelDurations = [0, 5000, 3000, 3000, 3000, 5000]; // 第0项不用，Lv1=5秒，Lv2~4=3秒，MAX=5秒
-      const speedLevelDelays = [200, 190, 180, 160, 130, 100]; // 每层速度
-      const scoreMultipliers = [1, 1, 2, 2, 3, 4]; // 得分倍率：第0项普通，1~5项波波层数，MAX为4倍
+      const maxSpeedLevel = 5; // 加班阶段：0正常，1提提神，2轻度加班，3中度加班，4疯狂加班，5通宵爆肝，5通宵爆肝
+      const speedLevelDurations = [0, 5000, 3000, 3000, 3000, 5000]; // 第0项不用，提提神5秒，轻/中/疯狂3秒，通宵爆肝5秒
+      const speedLevelDelays = [240, 200, 190, 175, 150, 125]; // 每阶段速度
+      const scoreMultipliers = [1, 1, 2, 2, 3, 4]; // 工资倍率：正常x1，提提神x1，轻度x2，中度x2，疯狂x3，通宵x4
       const speedInfoFontSize = 12; // 状态栏字体大小
 
-      // HR裁员模式
+      // 裁员模式
       const hrModeDuration = 5000; // 裁员模式持续时间(ms)
-      const hrShrinkOnEat = 0; // 吃到HR时立即减少的身体长度
-      const hrShrinkNormal = 1; // 裁员模式吃普通食物减少长度
-      const hrShrinkBobo = 1; // 裁员模式吃波波减少长度
-      const hrShrinkHehezi = 3; // 裁员模式吃贺贺子减少长度
-      const hrShrinkHr = 1; // 裁员模式再次吃HR减少长度，不延长时间
-      const hrInfoColor = "#B388FF"; // HR裁员提示颜色
+      const hrShrinkOnEat = 0; // 吃到裁员通知时立即减少的身体长度
+      const hrShrinkNormal = 1; // 裁员模式吸收普通职员减少长度
+      const hrInfoColor = "#B388FF"; // 裁员提示颜色
 
-      // 食物得分
-      const normalFoodScore = 1; // 普通食物基础得分
-      const heheziScore = 2; // 贺贺子基础得分
-      const azhuScore = 3; // 阿朱基础得分
+      // 背锅侠模式
+      const shieldModeDuration = 3000; // 背锅侠模式持续时间(ms)
+      const shieldInfoColor = "#34E27A"; // 背锅侠护盾颜色
+      const shieldWarningTime = 1000; // 背锅侠剩余多少毫秒开始闪烁
+      const shieldRingRadius = 24; // 背锅侠护盾基础半径(px)
+      const shieldRingPulse = 4; // 背锅侠护盾呼吸幅度(px)
 
-      // 阿朱食物
-      const azhuBodyCount = 1; // 吃阿朱增加几个阿朱身体
-      const outsourceBodyCount = 5; // 吃阿朱增加几个外包身体
+      // 团建模式
+      const teamModeDuration = 3000; // 团建模式持续时间(ms)
+      const teamAbsorbRange = 2; // 自动吸收附近几格内的员工
+      const teamAbsorbDuration = 280; // 团建吸收动画时长(ms)
+      const teamVacuumRingRadius = 31; // 团建吸力圈基础半径(px)
+      const teamVacuumRingPulse = 5; // 团建吸力圈呼吸幅度(px)
+      const teamImpactDuration = 220; // 团建吸收完成冲击波时长(ms)
+      const teamInfoColor = "#4DD0E1";
+
+      // 员工得分
+      const normalFoodScore = 1; // 普通职员基础得分
+      const heheziScore = 2; // 美女职员基础得分，保持原贺贺子身体系统
+      const azhuScore = 3; // 外包组长基础得分
+      const aiScore = 4; // AI员工基础得分
+      const internGoodScore = 5; // 实习生成功时基础得分
+      const internBadScore = -3; // 实习生翻车时基础扣分
+      const dogScore = -1; // 小狗基础扣分
+
+      // 外包组长
+      const azhuBodyCount = 1; // 吃外包组长增加几个组长身体
+      const outsourceBodyCount = 5; // 吃外包组长增加几个外包员工身体
 
       // 死亡反馈
       const deathFreezeTime = 2000; // 死亡后冻结停留时间(ms)
@@ -508,32 +532,129 @@
       const deathShakeDuration = 450; // 撞击后身体震动时长(ms)
       const deathShakeStrength = 4; // 身体震动强度(px)
 
-      // 食物概率（普通模式）
+      // 地图对象概率（正常上班）
+      const normalFoodRate = 0.24; // 普通职员
+      const heheziFoodRate = 0.12; // 美女职员
+      const azhuFoodRate = 0.08; // 外包组长
+      const aiFoodRate = 0.08; // AI员工
+      const internFoodRate = 0.08; // 实习生
+      const dogFoodRate = 0.08; // 小狗
+      const coffeeFoodRate = 0.16; // 咖啡，进入加班模式
+      const layoffFoodRate = 0.05; // 裁员通知，进入裁员模式
+      const potFoodRate = 0.04; // 锅，进入背锅侠模式
+      const diceFoodRate = 0.04; // 骰子，进入团建模式
+      // 老板 = 0.03
 
-      const normalFoodRate = 0.3; // 普通
-      const heheziFoodRate = 0.15; // 贺贺子
-      const azhuFoodRate = 0.1; // 阿朱
-      const boboFoodRate = 0.25; // 波波
-      const hrFoodRate = 0.05; // HR，进入裁员模式
-      // Bob = 0.15
+      // 地图对象概率（加班模式）
+      const speedModeNormalRate = 0.15; // 普通职员
+      const speedModeHeheziRate = 0.08; // 美女职员
+      const speedModeAzhuRate = 0.05; // 外包组长
+      const speedModeAiRate = 0.08; // AI员工
+      const speedModeInternRate = 0.07; // 实习生
+      const speedModeDogRate = 0.07; // 小狗
+      const speedModeCoffeeRate = 0.25; // 咖啡
+      const speedModeLayoffRate = 0.08; // 裁员通知
+      const speedModePotRate = 0.04; // 锅
+      const speedModeDiceRate = 0.04; // 骰子
+      // 老板 = 0.09
 
-      // 食物概率（波波模式）
-      const speedModeNormalRate = 0.15; // 普通
-      const speedModeHeheziRate = 0.1; // 贺贺子
-      const speedModeAzhuRate = 0.05; // 阿朱
-      const speedModeBoboRate = 0.3; // 波波
-      const speedModeHrRate = 0.1; // HR
-      // Bob = 0.3
+      // 加班阶段刷新表：
+      // 正常上班：只刷员工和咖啡，不刷团建/老板/裁员/背锅。
+      // 提提神：开始刷骰子/团建。
+      // 轻度加班：开始刷老板。
+      // 中度加班：开始刷裁员通知。
+      // 疯狂加班：开始刷锅/背锅侠。
+      // 通宵爆肝：最高阶段，工资x4，结束后直接回到正常上班。
+      const stageSpawnRates = [
+        {
+          normal: 0.28,
+          coffee: 0.18,
+          triple: 0.13,
+          azhu: 0.08,
+          ai: 0.09,
+          intern: 0.12,
+          dog: 0.12,
+          layoff: 0,
+          pot: 0,
+          dice: 0,
+          boss: 0,
+        },
+        {
+          normal: 0.25,
+          coffee: 0.22,
+          triple: 0.12,
+          azhu: 0.08,
+          ai: 0.1,
+          intern: 0.1,
+          dog: 0.07,
+          layoff: 0,
+          pot: 0,
+          dice: 0.04,
+          boss: 0,
+        },
+        {
+          normal: 0.2,
+          coffee: 0.24,
+          triple: 0.1,
+          azhu: 0.08,
+          ai: 0.11,
+          intern: 0.09,
+          dog: 0.07,
+          layoff: 0,
+          pot: 0,
+          dice: 0.05,
+          boss: 0.06,
+        },
+        {
+          normal: 0.17,
+          coffee: 0.24,
+          triple: 0.09,
+          azhu: 0.1,
+          ai: 0.12,
+          intern: 0.08,
+          dog: 0.06,
+          layoff: 0.06,
+          pot: 0,
+          dice: 0.05,
+          boss: 0.03,
+        },
+        {
+          normal: 0.14,
+          coffee: 0.24,
+          triple: 0.08,
+          azhu: 0.12,
+          ai: 0.13,
+          intern: 0.06,
+          dog: 0.05,
+          layoff: 0.06,
+          pot: 0.05,
+          dice: 0.05,
+          boss: 0.02,
+        },
+        {
+          normal: 0.1,
+          coffee: 0.24,
+          triple: 0.08,
+          azhu: 0.13,
+          ai: 0.15,
+          intern: 0.05,
+          dog: 0.04,
+          layoff: 0.07,
+          pot: 0.06,
+          dice: 0.06,
+          boss: 0.02,
+        },
+      ];
 
       // 食物数量
       const normalFoodCount = 3; // 普通模式食物数量
-      const speedModeFoodCounts = [3, 4, 6, 8, 10, 15]; // 第0项普通，1~5项波波层数
+      const speedModeFoodCounts = [3, 4, 6, 8, 10, 15]; // 0正常，1提提神，2轻度加班，3中度加班，4疯狂加班，5通宵爆肝，5通宵爆肝
 
       // 食物消失
       const foodLifeRandomOffset = 5000; // 食物出生时间随机偏移，避免一起消失
-      const bombLifeTime = 6000; // Bob存活时间(ms)
-      const bobWarningDuration = 1200; // Bob淡入预警时间(ms)，结束后才会致死
-      const bobWarningMinAlpha = 0.18; // Bob刚出现时的最低透明度
+      const bombLifeTime = 6000; // 老板存活时间(ms)
+      const bobWarningDuration = 1200; // 老板淡入预警时间(ms)，结束后才会致死
+      const bobWarningMinAlpha = 0.18; // 老板刚出现时的最低透明度
       const normalFoodLifeTime = 12000; // 普通食物存在时间(ms)
       const foodDisappearDuration = 800; // 消失动画时长(ms)
       const foodBlinkSpeed = 160; // 闪烁速度
@@ -556,7 +677,28 @@
       const popupRiseSpeed = 0.7; // 上升速度
       const popupFontSize = 22; // 字体大小
       const popupStrokeWidth = 4; // 描边粗细
-      const popupYOffset = 0; // Y轴偏移
+      const popupYOffset = -10; // Y轴偏移，避免刚出现时被头像挡住
+      const popupSubTextFontSize = 13; // 飘字副标题字体大小
+      const popupSubTextColor = "#FFFFFF"; // 飘字副标题颜色
+      const popupSubTextAlpha = 0.9; // 飘字副标题透明度
+      const popupSubTextOffsetY = 20; // 飘字副标题相对主文字的Y偏移
+
+      // 飘字小字文案 / Popup Labels
+      const popupLabelNormal = "普通员工";
+      const popupLabelBeauty = "美女职员";
+      const popupLabelOutsource = "外包大军";
+      const popupLabelAI = "AI替代";
+      const popupLabelInternGood = "天才实习生";
+      const popupLabelInternBad = "混个学分";
+      const popupLabelDog = "卖狗粮";
+      const popupLabelCoffee = "鹿鹿咖啡";
+      const popupLabelLayoff = "裁员通知";
+      const popupLabelPot = "今天我背锅";
+      const popupLabelDice = "公司团建";
+      const popupLabelBoss = "老板来了";
+      const popupLabelShieldBlock = "背锅侠";
+      const popupLabelLayoffMode = "裁员中";
+
       const popupScoreColors = [
         "#FFFFFF",
         "#FFFFFF",
@@ -572,6 +714,7 @@
       const ctx = canvas.getContext("2d");
       const scoreEl = document.getElementById("score");
       const bestScoreEl = document.getElementById("bestScore");
+      const topBar = document.getElementById("topBar");
       const restartBtn = document.getElementById("restartBtn");
       const startBtn = document.getElementById("startBtn");
       const pauseBtn = document.getElementById("pauseBtn");
@@ -594,11 +737,16 @@
       // ==================== 常量 ====================
       const count = canvas.width / size;
       const FOOD_NORMAL = "normal";
-      const FOOD_SPEED = "speed";
-      const FOOD_TRIPLE = "triple";
-      const FOOD_BOMB = "bomb";
-      const FOOD_HR = "hr";
-      const FOOD_AZHU = "azhu";
+      const FOOD_SPEED = "speed"; // 咖啡，加班模式
+      const FOOD_TRIPLE = "triple"; // 美女职员，沿用原贺贺子系统
+      const FOOD_BOMB = "bomb"; // 老板
+      const FOOD_HR = "hr"; // 裁员通知
+      const FOOD_AZHU = "azhu"; // 外包组长
+      const FOOD_AI = "ai";
+      const FOOD_INTERN = "intern";
+      const FOOD_DOG = "dog";
+      const FOOD_POT = "pot";
+      const FOOD_DICE = "dice";
 
       // ==================== 资源 ====================
       const images = {
@@ -608,14 +756,19 @@
         bg: loadImage("background.jpg"),
         bgSpeed: loadImage("background_speed.jpg"),
         bgBomb: loadImage("background_bomb.jpg"),
-        bobo: loadImage("bobo.png"),
+        coffee: loadImage("coffee.png"),
         hehezi: loadImage("hehezi.png"),
         xiaobai: loadImage("xiaobai.png"),
         xiaomao: loadImage("xiaomao.png"),
         bob: loadImage("bob.png"),
-        hr: loadImage("hr.png"),
+        layoff: loadImage("layoff.png"),
         azhu: loadImage("azhu.png"),
         outsource: loadImage("outsource.png"),
+        ai: loadImage("ai.png"),
+        intern: loadImage("intern.png"),
+        dog: loadImage("dog.png"),
+        pot: loadImage("pot.png"),
+        dice: loadImage("dice.png"),
       };
 
       const eatSound = new Audio("eat.mp3");
@@ -655,12 +808,16 @@
       let eatingStartTime = 0;
       let pulseTime = 0;
       let scorePopups = [];
+      let teamAbsorbAnimations = [];
+      let teamImpactWaves = [];
 
       let speedModeEndTime = 0;
       let speedLevel = 0;
 
       let hrModeEndTime = 0;
       let lastHrModeTick = 0;
+      let shieldModeEndTime = 0;
+      let teamModeEndTime = 0;
 
       let headCurrentAngle = -Math.PI / 2;
       let headTargetAngle = -Math.PI / 2;
@@ -683,6 +840,8 @@
         bodySkins = [];
         foods = [];
         scorePopups = [];
+        teamAbsorbAnimations = [];
+        teamImpactWaves = [];
 
         dir = { x: 1, y: 0 };
         nextDir = { x: 1, y: 0 };
@@ -703,6 +862,8 @@
         speedLevel = 0;
         hrModeEndTime = 0;
         lastHrModeTick = 0;
+        shieldModeEndTime = 0;
+        teamModeEndTime = 0;
         eatingStartTime = 0;
         headCurrentAngle = -Math.PI / 2;
         headTargetAngle = -Math.PI / 2;
@@ -722,7 +883,10 @@
         if (gameStarted && !gameOver) return;
         startBtn.style.display = "none";
         startHint.style.display = "none";
+        document.body.classList.add("gameActive");
         gameStarted = true;
+        requestFullscreenIfPossible();
+        setTimeout(requestFullscreenIfPossible, 80);
         await requestFullscreenIfPossible();
         bgm.play().catch(() => {});
         reset();
@@ -768,9 +932,20 @@
       }
 
       async function requestFullscreenIfPossible() {
-        if (!document.fullscreenEnabled || document.fullscreenElement) return;
+        if (document.fullscreenElement) return;
+
         try {
-          await document.documentElement.requestFullscreen();
+          if (document.fullscreenEnabled) {
+            await document.documentElement.requestFullscreen();
+          }
+
+          if (
+            screen.orientation &&
+            screen.orientation.lock &&
+            window.innerWidth < 900
+          ) {
+            await screen.orientation.lock("landscape").catch(() => {});
+          }
         } catch (e) {
           console.log("全屏请求被浏览器拒绝", e);
         }
@@ -904,6 +1079,22 @@
         return getGameTime() <= hrModeEndTime;
       }
 
+      function isShieldMode() {
+        return getGameTime() <= shieldModeEndTime;
+      }
+
+      function isTeamMode() {
+        return getGameTime() <= teamModeEndTime;
+      }
+
+      function startShieldMode() {
+        shieldModeEndTime = getGameTime() + shieldModeDuration;
+      }
+
+      function startTeamMode() {
+        teamModeEndTime = getGameTime() + teamModeDuration;
+      }
+
       function startHrMode() {
         if (isHrMode()) return;
         hrModeEndTime = getGameTime() + hrModeDuration;
@@ -964,48 +1155,31 @@
       }
 
       function randomFoodType() {
+        const level = Math.min(Math.max(speedLevel, 0), maxSpeedLevel);
+        const rates = stageSpawnRates[level] || stageSpawnRates[0];
         const r = Math.random();
+        let t = 0;
 
-        if (isSpeedMode()) {
-          if (r < speedModeNormalRate) return FOOD_NORMAL;
-          if (r < speedModeNormalRate + speedModeBoboRate) return FOOD_SPEED;
-          if (r < speedModeNormalRate + speedModeBoboRate + speedModeHeheziRate)
-            return FOOD_TRIPLE;
-          if (
-            r <
-            speedModeNormalRate +
-              speedModeBoboRate +
-              speedModeHeheziRate +
-              speedModeHrRate
-          )
-            return FOOD_HR;
-          if (
-            r <
-            speedModeNormalRate +
-              speedModeBoboRate +
-              speedModeHeheziRate +
-              speedModeHrRate +
-              speedModeAzhuRate
-          )
-            return FOOD_AZHU;
-          return FOOD_BOMB;
-        }
-
-        if (r < normalFoodRate) return FOOD_NORMAL;
-        if (r < normalFoodRate + boboFoodRate) return FOOD_SPEED;
-        if (r < normalFoodRate + boboFoodRate + heheziFoodRate)
-          return FOOD_TRIPLE;
-        if (r < normalFoodRate + boboFoodRate + heheziFoodRate + hrFoodRate)
-          return FOOD_HR;
-        if (
-          r <
-          normalFoodRate +
-            boboFoodRate +
-            heheziFoodRate +
-            hrFoodRate +
-            azhuFoodRate
-        )
-          return FOOD_AZHU;
+        t += rates.normal || 0;
+        if (r < t) return FOOD_NORMAL;
+        t += rates.coffee || 0;
+        if (r < t) return FOOD_SPEED;
+        t += rates.triple || 0;
+        if (r < t) return FOOD_TRIPLE;
+        t += rates.azhu || 0;
+        if (r < t) return FOOD_AZHU;
+        t += rates.ai || 0;
+        if (r < t) return FOOD_AI;
+        t += rates.intern || 0;
+        if (r < t) return FOOD_INTERN;
+        t += rates.dog || 0;
+        if (r < t) return FOOD_DOG;
+        t += rates.layoff || 0;
+        if (r < t) return FOOD_HR;
+        t += rates.pot || 0;
+        if (r < t) return FOOD_POT;
+        t += rates.dice || 0;
+        if (r < t) return FOOD_DICE;
         return FOOD_BOMB;
       }
 
@@ -1033,6 +1207,231 @@
           snake.some((p) => p.x === x && p.y === y) ||
           foods.some((f) => f.x === x && f.y === y)
         );
+      }
+
+      function isEmployeeFood(type) {
+        return [
+          FOOD_NORMAL,
+          FOOD_TRIPLE,
+          FOOD_AZHU,
+          FOOD_AI,
+          FOOD_INTERN,
+          FOOD_DOG,
+        ].includes(type);
+      }
+
+      function isItemFood(type) {
+        return [FOOD_SPEED, FOOD_HR, FOOD_POT, FOOD_DICE].includes(type);
+      }
+
+      function getEmployeeShrinkCount(type) {
+        if (type === FOOD_NORMAL) return 1;
+        if (type === FOOD_TRIPLE) return 3;
+        if (type === FOOD_AZHU) return azhuBodyCount + outsourceBodyCount;
+        if (type === FOOD_AI) return 0;
+        if (type === FOOD_INTERN) return 1;
+        if (type === FOOD_DOG) return 1;
+        return 0;
+      }
+
+      function getGridDistance(a, b) {
+        const dx = Math.abs(getWrappedDelta(a.x, b.x));
+        const dy = Math.abs(getWrappedDelta(a.y, b.y));
+        return Math.max(dx, dy);
+      }
+
+      function absorbNearbyEmployees() {
+        if (!isTeamMode() || snake.length <= 0) return;
+
+        const head = snake[0];
+        const nearbyEmployees = foods.filter(
+          (food) =>
+            !food.removingAt &&
+            isEmployeeFood(food.type) &&
+            getGridDistance(food, head) <= teamAbsorbRange,
+        );
+
+        nearbyEmployees.forEach((food) => {
+          foods = foods.filter((f) => f !== food);
+
+          teamAbsorbAnimations.push({
+            food,
+            fromX: food.x * size,
+            fromY: food.y * size,
+            startedAt: getGameTime(),
+            handled: false,
+          });
+        });
+      }
+
+      function updateTeamAbsorbAnimations() {
+        if (teamAbsorbAnimations.length === 0) return;
+
+        teamAbsorbAnimations.forEach((anim) => {
+          if (anim.handled) return;
+
+          const elapsed = getGameTime() - anim.startedAt;
+          if (elapsed < teamAbsorbDuration) return;
+
+          anim.handled = true;
+          handleEatenFood(anim.food, snake[0], true);
+          teamImpactWaves.push({
+            x: snake[0].x * size + size / 2,
+            y: snake[0].y * size + size / 2,
+            startedAt: getGameTime(),
+          });
+          addScorePopup(
+            snake[0].x * size,
+            snake[0].y * size,
+            "团建+",
+            teamInfoColor,
+            popupFontSize,
+            "公司团建",
+          );
+        });
+
+        teamAbsorbAnimations = teamAbsorbAnimations.filter(
+          (anim) => getGameTime() - anim.startedAt < teamAbsorbDuration + 80,
+        );
+      }
+
+      function drawTeamVacuumEffect() {
+        if (!isTeamMode() || snake.length <= 0) return;
+
+        const headPos = getRenderPosition(snake[0], prevSnake[0] || snake[0]);
+        const cx = headPos.x + size / 2;
+        const cy = headPos.y + size / 2;
+        const t = getGameTime() * 0.006;
+        const radius =
+          teamVacuumRingRadius + Math.sin(t * 2.4) * teamVacuumRingPulse;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(t);
+
+        for (let i = 0; i < 3; i++) {
+          const r = radius + i * 8;
+          const alpha = 0.34 - i * 0.08;
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0.25 + i * 0.9, Math.PI * 1.55 + i * 0.9);
+          ctx.strokeStyle = `rgba(77, 208, 225, ${alpha})`;
+          ctx.lineWidth = 3 - i * 0.45;
+          ctx.shadowColor = teamInfoColor;
+          ctx.shadowBlur = 9;
+          ctx.stroke();
+        }
+
+        ctx.rotate(-t * 1.8);
+        ctx.beginPath();
+        ctx.arc(0, 0, 8 + Math.sin(t * 5) * 2, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.34)";
+        ctx.shadowColor = teamInfoColor;
+        ctx.shadowBlur = 14;
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawTeamAbsorbTrail(fromX, fromY, toX, toY, progress) {
+        const startX = fromX + size / 2;
+        const startY = fromY + size / 2;
+        const endX = toX + size / 2;
+        const endY = toY + size / 2;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0.15, 0.7 * (1 - progress * 0.55));
+        ctx.strokeStyle = teamInfoColor;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = teamInfoColor;
+        ctx.shadowBlur = 8;
+
+        for (let i = 0; i < 3; i++) {
+          const offset = (i - 1) * 5;
+          const midX =
+            (startX + endX) / 2 + Math.sin(progress * Math.PI + i) * 12;
+          const midY =
+            (startY + endY) / 2 -
+            14 -
+            i * 4 +
+            Math.cos(progress * Math.PI + i) * 6;
+
+          ctx.beginPath();
+          ctx.moveTo(startX + offset, startY - offset);
+          ctx.quadraticCurveTo(midX, midY, endX, endY);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      function drawTeamImpactWaves() {
+        if (teamImpactWaves.length === 0) return;
+
+        teamImpactWaves.forEach((wave) => {
+          const progress = Math.min(
+            (getGameTime() - wave.startedAt) / teamImpactDuration,
+            1,
+          );
+          const radius = 6 + progress * 22;
+          const alpha = 1 - progress;
+
+          ctx.save();
+          ctx.globalAlpha = alpha * 0.7;
+          ctx.beginPath();
+          ctx.arc(wave.x, wave.y, radius, 0, Math.PI * 2);
+          ctx.strokeStyle = teamInfoColor;
+          ctx.lineWidth = 3;
+          ctx.shadowColor = teamInfoColor;
+          ctx.shadowBlur = 12;
+          ctx.stroke();
+          ctx.restore();
+        });
+
+        teamImpactWaves = teamImpactWaves.filter(
+          (wave) => getGameTime() - wave.startedAt < teamImpactDuration,
+        );
+      }
+
+      function drawTeamAbsorbAnimations() {
+        drawTeamVacuumEffect();
+
+        if (teamAbsorbAnimations.length === 0 || snake.length <= 0) {
+          drawTeamImpactWaves();
+          return;
+        }
+
+        const headPos = getRenderPosition(snake[0], prevSnake[0] || snake[0]);
+        const targetX = headPos.x;
+        const targetY = headPos.y;
+
+        teamAbsorbAnimations.forEach((anim) => {
+          const elapsed = getGameTime() - anim.startedAt;
+          const rawProgress = Math.min(elapsed / teamAbsorbDuration, 1);
+          const progress = 1 - Math.pow(1 - rawProgress, 3);
+          const arcLift = Math.sin(rawProgress * Math.PI) * 14;
+
+          const x = anim.fromX + (targetX - anim.fromX) * progress;
+          const y = anim.fromY + (targetY - anim.fromY) * progress - arcLift;
+          const scale = 1 - rawProgress * 0.22;
+
+          drawTeamAbsorbTrail(
+            anim.fromX,
+            anim.fromY,
+            targetX,
+            targetY,
+            rawProgress,
+          );
+
+          ctx.save();
+          ctx.globalAlpha = 1 - rawProgress * 0.12;
+          ctx.translate(x + size / 2, y + size / 2);
+          ctx.scale(scale, scale);
+          ctx.rotate(Math.sin(rawProgress * Math.PI) * 0.22);
+          drawCircleImage(getFoodImage(anim.food.type), -size / 2, -size / 2);
+          ctx.restore();
+        });
+
+        drawTeamImpactWaves();
       }
 
       function getActiveFoodCount() {
@@ -1171,7 +1570,7 @@
           (food) => food.x === head.x && food.y === head.y,
         );
 
-        // Bob淡入预警期内只是危险提示，不会致死，也不会被吃掉。
+        // 老板淡入预警期内只是危险提示，不会致死，也不会被吃掉。
         const eatenFood =
           foundFood &&
           foundFood.type === FOOD_BOMB &&
@@ -1184,7 +1583,10 @@
         // 吃到食物时，尾巴不会离开，所以需要检查整条蛇。
         const bodyToCheck = eatenFood ? snake : snake.slice(0, -1);
 
-        if (bodyToCheck.some((p) => p.x === head.x && p.y === head.y)) {
+        if (
+          bodyToCheck.some((p) => p.x === head.x && p.y === head.y) &&
+          !isShieldMode()
+        ) {
           snake.unshift(head);
           if (!eatenFood) snake.pop();
           startDeath(false);
@@ -1194,8 +1596,30 @@
         if (eatenFood && eatenFood.type === FOOD_BOMB) {
           snake.unshift(head);
           snake.pop();
-          addScorePopup(head.x * size, head.y * size, "危！", "#FF4444");
-          startDeath(true);
+
+          if (isShieldMode()) {
+            foods = foods.filter((f) => f !== eatenFood);
+            addScorePopup(
+              head.x * size,
+              head.y * size,
+              "挡住！",
+              shieldInfoColor,
+              popupFontSize,
+              popupLabelShieldBlock,
+            );
+            fillFoods();
+          } else {
+            addScorePopup(
+              head.x * size,
+              head.y * size,
+              "危！",
+              "#FF4444",
+              popupFontSize,
+              getPopupLabel(FOOD_BOMB),
+            );
+            startDeath(true);
+          }
+
           return;
         }
 
@@ -1206,96 +1630,100 @@
         } else {
           snake.pop();
         }
+
+        absorbNearbyEmployees();
       }
 
-      function handleEatenFood(food, head) {
+      function getPopupLabel(foodType, scoreValue = 0) {
+        if (foodType === FOOD_NORMAL) return popupLabelNormal;
+        if (foodType === FOOD_TRIPLE) return popupLabelBeauty;
+        if (foodType === FOOD_AZHU) return popupLabelOutsource;
+        if (foodType === FOOD_AI) return popupLabelAI;
+        if (foodType === FOOD_INTERN)
+          return scoreValue >= 0 ? popupLabelInternGood : popupLabelInternBad;
+        if (foodType === FOOD_DOG) return popupLabelDog;
+        if (foodType === FOOD_SPEED) return popupLabelCoffee;
+        if (foodType === FOOD_HR) return popupLabelLayoff;
+        if (foodType === FOOD_POT) return popupLabelPot;
+        if (foodType === FOOD_DICE) return popupLabelDice;
+        if (foodType === FOOD_BOMB) return popupLabelBoss;
+        return "";
+      }
+
+      function handleEatenFood(food, head, fromTeamAbsorb = false) {
         foods = foods.filter((f) => f !== food);
         eatingStartTime = getGameTime();
         playSound(eatSound);
 
-        if (food.type === FOOD_AZHU) {
-          if (isHrMode()) {
-            const shrinkCount = azhuBodyCount + outsourceBodyCount;
-            shrinkAfterEating(shrinkCount);
-            addScorePopup(
-              head.x * size,
-              head.y * size,
-              `-${shrinkCount}`,
-              hrInfoColor,
-              popupFontSize,
-            );
-            fillFoods();
-            return;
-          }
-
-          const point = azhuScore * getScoreMultiplier();
-          addScore(point);
+        // 物品：只负责进入状态，不加分、不加身体。
+        if (food.type === FOOD_SPEED) {
+          startSpeedMode();
           addScorePopup(
             head.x * size,
             head.y * size,
-            `+${point}`,
+            "☕",
             getMultiplierColor(),
-            getMultiplierFontSize(),
+            popupFontSize,
+            getPopupLabel(FOOD_SPEED),
           );
-
-          for (let i = 0; i < azhuBodyCount; i++) {
-            bodySkins.push("azhu");
-          }
-
-          for (let i = 0; i < outsourceBodyCount; i++) {
-            bodySkins.push("outsource");
-          }
-
-          while (snake.length < bodySkins.length + 1) {
-            const tail = snake[snake.length - 1];
-            snake.push(copyPoint(tail));
-          }
-
           fillFoods();
           return;
         }
 
         if (food.type === FOOD_HR) {
-          if (!isHrMode()) {
-            startHrMode();
-            shrinkAfterEating(hrShrinkOnEat);
-            addScorePopup(
-              head.x * size,
-              head.y * size,
-              "HR裁员",
-              hrInfoColor,
-              popupFontSize,
-            );
-          } else {
-            shrinkAfterEating(hrShrinkHr);
-            addScorePopup(
-              head.x * size,
-              head.y * size,
-              `-${hrShrinkHr}`,
-              hrInfoColor,
-              popupFontSize,
-            );
-          }
-
+          startHrMode();
+          shrinkAfterEating(hrShrinkOnEat);
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            "📉",
+            hrInfoColor,
+            popupFontSize,
+            getPopupLabel(FOOD_HR),
+          );
           fillFoods();
           return;
         }
 
-        if (isHrMode()) {
-          let shrinkCount = hrShrinkNormal;
+        if (food.type === FOOD_POT) {
+          startShieldMode();
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            "🛡️",
+            shieldInfoColor,
+            popupFontSize,
+            getPopupLabel(FOOD_POT),
+          );
+          fillFoods();
+          return;
+        }
 
-          if (food.type === FOOD_SPEED) shrinkCount = hrShrinkBobo;
-          if (food.type === FOOD_TRIPLE) shrinkCount = hrShrinkHehezi;
-          if (food.type === FOOD_AZHU)
-            shrinkCount = azhuBodyCount + outsourceBodyCount;
+        if (food.type === FOOD_DICE) {
+          startTeamMode();
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            "🎲",
+            teamInfoColor,
+            popupFontSize,
+            getPopupLabel(FOOD_DICE),
+          );
+          fillFoods();
+          return;
+        }
 
+        // 裁员模式：员工不再加分和加身体，而是减少身体。
+        if (isHrMode() && isEmployeeFood(food.type)) {
+          const shrinkCount = getEmployeeShrinkCount(food.type);
           shrinkAfterEating(shrinkCount);
           addScorePopup(
             head.x * size,
             head.y * size,
-            `-${shrinkCount}`,
+            shrinkCount > 0 ? `-${shrinkCount}` : "AI替代",
             hrInfoColor,
             popupFontSize,
+            popupLabelLayoffMode,
           );
           fillFoods();
           return;
@@ -1312,22 +1740,9 @@
             `+${point}`,
             getMultiplierColor(),
             getMultiplierFontSize(),
+            getPopupLabel(FOOD_NORMAL),
           );
           bodySkins.push("body");
-        }
-
-        if (food.type === FOOD_SPEED) {
-          const point = normalFoodScore * multiplier;
-          addScore(point);
-          addScorePopup(
-            head.x * size,
-            head.y * size,
-            `+${point}`,
-            getMultiplierColor(),
-            getMultiplierFontSize(),
-          );
-          bodySkins.push("body");
-          startSpeedMode();
         }
 
         if (food.type === FOOD_TRIPLE) {
@@ -1339,8 +1754,73 @@
             `+${point}`,
             getMultiplierColor(),
             getMultiplierFontSize(),
+            getPopupLabel(FOOD_TRIPLE),
           );
           bodySkins.push("hehezi", "xiaobai", "xiaomao");
+        }
+
+        if (food.type === FOOD_AZHU) {
+          const point = azhuScore * multiplier;
+          addScore(point);
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            `+${point}`,
+            getMultiplierColor(),
+            getMultiplierFontSize(),
+            getPopupLabel(FOOD_AZHU),
+          );
+
+          for (let i = 0; i < azhuBodyCount; i++) {
+            bodySkins.push("azhu");
+          }
+
+          for (let i = 0; i < outsourceBodyCount; i++) {
+            bodySkins.push("outsource");
+          }
+        }
+
+        if (food.type === FOOD_AI) {
+          const point = aiScore * multiplier;
+          addScore(point);
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            `+${point}`,
+            getMultiplierColor(),
+            getMultiplierFontSize(),
+            getPopupLabel(FOOD_AI),
+          );
+        }
+
+        if (food.type === FOOD_INTERN) {
+          const basePoint =
+            Math.random() < 0.5 ? internGoodScore : internBadScore;
+          const point = basePoint * multiplier;
+          addScore(point);
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            point >= 0 ? `+${point}` : `${point}`,
+            point >= 0 ? getMultiplierColor() : "#FF7777",
+            getMultiplierFontSize(),
+            getPopupLabel(FOOD_INTERN, point),
+          );
+          bodySkins.push("intern");
+        }
+
+        if (food.type === FOOD_DOG) {
+          const point = dogScore * multiplier;
+          addScore(point);
+          addScorePopup(
+            head.x * size,
+            head.y * size,
+            `${point}`,
+            "#FF7777",
+            popupFontSize,
+            getPopupLabel(FOOD_DOG),
+          );
+          bodySkins.push("dog");
         }
 
         while (snake.length < bodySkins.length + 1) {
@@ -1383,10 +1863,13 @@
           return;
         }
 
+        updateTeamAbsorbAnimations();
         foods.forEach(drawFood);
         updateModeStatus();
-        drawScorePopups();
         drawSnake();
+        drawShieldEffect();
+        drawTeamAbsorbAnimations();
+        drawScorePopups();
 
         if (gamePaused) {
           drawPauseOverlay();
@@ -1422,7 +1905,7 @@
         ctx.font = "32px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(
-          bombGameOver ? "" : "熊熊很大，尼吃不下~",
+          bombGameOver ? "" : "队伍不好带啊~",
           canvas.width / 2,
           canvas.height / 2 - 30,
         );
@@ -1492,8 +1975,13 @@
       }
 
       function getFoodRingColor(food) {
-        if (food.type === FOOD_BOMB) return "#FF4444";
-        if (food.type === FOOD_HR || isHrMode()) return hrInfoColor;
+        if (food.type === FOOD_BOMB)
+          return isShieldMode() ? shieldInfoColor : "#FF4444";
+        if (food.type === FOOD_HR) return hrInfoColor;
+        if (food.type === FOOD_POT) return shieldInfoColor;
+        if (food.type === FOOD_DICE) return teamInfoColor;
+        if (food.type === FOOD_SPEED) return getMultiplierColor();
+        if (isHrMode() && isEmployeeFood(food.type)) return hrInfoColor;
         return getMultiplierColor();
       }
 
@@ -1532,39 +2020,99 @@
         );
       }
 
+      function getWorkStageName(level) {
+        if (level === 1) return "☕ 提提神";
+        if (level === 2) return "🔥 轻度加班";
+        if (level === 3) return "🔥 中度加班";
+        if (level === 4) return "🔥 疯狂加班";
+        if (level >= 5) return "🌈 通宵爆肝";
+        return "☕ 正常上班";
+      }
+
+      function getWorkStageShortName(level) {
+        if (level === 1) return "☕提神";
+        if (level === 2) return "🔥轻";
+        if (level === 3) return "🔥中";
+        if (level === 4) return "🔥疯";
+        if (level >= 5) return "🌈通宵";
+        return "☕正常";
+      }
+
       function updateModeStatus() {
         if (!statusBar) return;
+
+        const fullParts = [];
+        const shortParts = [];
+        let color = "rgba(255, 255, 255, 0.78)";
+
+        if (isSpeedMode()) {
+          const remain = Math.max(
+            0,
+            Math.ceil((speedModeEndTime - getGameTime()) / 1000),
+          );
+          const multiplier = getScoreMultiplier();
+          const stageName = getWorkStageName(speedLevel);
+          const shortName = getWorkStageShortName(speedLevel);
+
+          fullParts.push(`${stageName} 工资×${multiplier} ${remain}s`);
+          shortParts.push(`${shortName}×${multiplier} ${remain}s`);
+
+          if (isMaxSpeedMode()) {
+            color = getRainbowColor();
+          } else {
+            color = resolveDrawColor(getMultiplierColor());
+          }
+        }
+
+        if (isShieldMode()) {
+          const remain = Math.max(
+            0,
+            Math.ceil((shieldModeEndTime - getGameTime()) / 1000),
+          );
+          fullParts.push(`🛡️ 背锅中 ${remain}s`);
+          shortParts.push(`🛡️${remain}s`);
+          if (!isSpeedMode()) color = shieldInfoColor;
+        }
+
+        if (isTeamMode()) {
+          const remain = Math.max(
+            0,
+            Math.ceil((teamModeEndTime - getGameTime()) / 1000),
+          );
+          fullParts.push(`🎲 团建中 ${remain}s`);
+          shortParts.push(`🎲${remain}s`);
+          if (!isSpeedMode() && !isShieldMode()) color = teamInfoColor;
+        }
 
         if (isHrMode()) {
           const remain = Math.max(
             0,
             Math.ceil((hrModeEndTime - getGameTime()) / 1000),
           );
-          statusBar.textContent = `👔 HR裁员中  ${remain}s`;
-          statusBar.style.color = hrInfoColor;
-          return;
+          fullParts.push(`📉 裁员中 ${remain}s`);
+          shortParts.push(`📉${remain}s`);
+          if (!isSpeedMode() && !isShieldMode() && !isTeamMode())
+            color = hrInfoColor;
         }
 
-        if (!isSpeedMode()) {
-          statusBar.textContent = "普通模式";
-          statusBar.style.color = "rgba(255, 255, 255, 0.78)";
-          return;
+        if (fullParts.length === 0) {
+          fullParts.push("☕ 正常上班");
+          shortParts.push("☕ 正常");
         }
 
-        const remain = Math.max(
-          0,
-          Math.ceil((speedModeEndTime - getGameTime()) / 1000),
-        );
-        const multiplier = getScoreMultiplier();
+        const fullText = fullParts.join("  ");
+        const shortText = shortParts.join("  ");
+        statusBar.textContent = fullText;
 
-        if (isMaxSpeedMode()) {
-          statusBar.textContent = `🔥 MAX 波波！ 倍率 x${multiplier}  ${remain}s`;
-          statusBar.style.color = getRainbowColor();
-          return;
-        }
+        requestAnimationFrame(() => {
+          if (!statusBar) return;
+          statusBar.textContent = fullText;
+          if (statusBar.scrollWidth > statusBar.clientWidth) {
+            statusBar.textContent = shortText;
+          }
+        });
 
-        statusBar.textContent = `⚡ 波波 Lv.${speedLevel}  倍率 x${multiplier}  ${remain}s后降层`;
-        statusBar.style.color = resolveDrawColor(getMultiplierColor());
+        statusBar.style.color = color;
       }
 
       function drawScorePopups() {
@@ -1574,6 +2122,54 @@
           popup.life -= 0.8;
         });
         scorePopups = scorePopups.filter((popup) => popup.life > 0);
+      }
+
+      function drawShieldEffect() {
+        if (!isShieldMode() || snake.length <= 0) return;
+
+        const remain = shieldModeEndTime - getGameTime();
+        const isWarning = remain <= shieldWarningTime;
+        const blink = isWarning
+          ? Math.floor(getGameTime() / 120) % 2 === 0
+          : true;
+
+        if (!blink) return;
+
+        const headPos = getRenderPosition(snake[0], prevSnake[0] || snake[0]);
+        const cx = headPos.x + size / 2;
+        const cy = headPos.y + size / 2;
+        const t = getGameTime() * 0.007;
+        const radius = shieldRingRadius + Math.sin(t * 2.5) * shieldRingPulse;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(t);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = isWarning
+          ? "rgba(52, 226, 122, 0.95)"
+          : "rgba(52, 226, 122, 0.68)";
+        ctx.lineWidth = isWarning ? 4 : 3;
+        ctx.shadowColor = shieldInfoColor;
+        ctx.shadowBlur = isWarning ? 22 : 14;
+        ctx.stroke();
+
+        for (let i = 0; i < 4; i++) {
+          ctx.beginPath();
+          ctx.arc(
+            0,
+            0,
+            radius + 4,
+            i * Math.PI * 0.5 + 0.12,
+            i * Math.PI * 0.5 + 0.55,
+          );
+          ctx.strokeStyle = "rgba(180,255,205,0.72)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        ctx.restore();
       }
 
       function drawSnake() {
@@ -1691,15 +2287,35 @@
 
       function drawPopup(popup) {
         const alpha = popup.life / popup.maxLife;
+        const ageProgress = 1 - alpha;
+        const popScale = 0.82 + 0.18 * Math.min(ageProgress / 0.18, 1);
+        const x = popup.x + size / 2;
+        const y = popup.y + popupYOffset;
+
         ctx.save();
         ctx.globalAlpha = alpha;
+        ctx.translate(x, y);
+        ctx.scale(popScale, popScale);
+
         ctx.fillStyle = resolveDrawColor(popup.color);
         ctx.strokeStyle = "#000";
         ctx.lineWidth = popupStrokeWidth;
         ctx.font = `bold ${popup.fontSize || popupFontSize}px sans-serif`;
         ctx.textAlign = "center";
-        ctx.strokeText(popup.text, popup.x + size / 2, popup.y + popupYOffset);
-        ctx.fillText(popup.text, popup.x + size / 2, popup.y + popupYOffset);
+        ctx.textBaseline = "middle";
+        ctx.strokeText(popup.text, 0, 0);
+        ctx.fillText(popup.text, 0, 0);
+
+        if (popup.subText) {
+          ctx.globalAlpha = alpha * popupSubTextAlpha;
+          ctx.fillStyle = popupSubTextColor;
+          ctx.strokeStyle = "rgba(0,0,0,0.85)";
+          ctx.lineWidth = Math.max(2, popupStrokeWidth - 2);
+          ctx.font = `bold ${popupSubTextFontSize}px sans-serif`;
+          ctx.strokeText(popup.subText, 0, popupSubTextOffsetY);
+          ctx.fillText(popup.subText, 0, popupSubTextOffsetY);
+        }
+
         ctx.restore();
       }
 
@@ -1709,11 +2325,13 @@
         text,
         color = "#ffffff",
         fontSize = popupFontSize,
+        subText = "",
       ) {
         scorePopups.push({
           x,
           y,
           text,
+          subText,
           color,
           fontSize,
           life: popupLife,
@@ -1776,11 +2394,16 @@
       }
 
       function getFoodImage(type) {
-        if (type === FOOD_SPEED) return images.bobo;
+        if (type === FOOD_SPEED) return images.coffee;
         if (type === FOOD_TRIPLE) return images.hehezi;
         if (type === FOOD_BOMB) return images.bob;
-        if (type === FOOD_HR) return images.hr;
+        if (type === FOOD_HR) return images.layoff;
         if (type === FOOD_AZHU) return images.azhu;
+        if (type === FOOD_AI) return images.ai;
+        if (type === FOOD_INTERN) return images.intern;
+        if (type === FOOD_DOG) return images.dog;
+        if (type === FOOD_POT) return images.pot;
+        if (type === FOOD_DICE) return images.dice;
         return images.body;
       }
 
@@ -1790,6 +2413,8 @@
         if (type === "xiaomao") return images.xiaomao;
         if (type === "azhu") return images.azhu;
         if (type === "outsource") return images.outsource;
+        if (type === "intern") return images.intern;
+        if (type === "dog") return images.dog;
         return images.body;
       }
 
@@ -1830,28 +2455,37 @@
       }
 
       // ==================== 资源加载 ====================
-      const assetDisplayNames = {
-        head: "熊头",
-        headEat: "吃东西表情",
-        body: "普通身体",
-        bg: "普通背景",
-        bgSpeed: "波波背景",
-        bgBomb: "Bob结局背景",
-        bobo: "波波",
-        hehezi: "贺贺子",
-        xiaobai: "小白身体",
-        xiaomao: "小毛身体",
-        bob: "Bob危险食物",
-        hr: "HR裁员食物",
-        azhu: "阿朱食物",
-        outsource: "外包身体",
+      const assetLoadingTips = {
+        head: "整理领带中",
+        headEat: "正在练习微笑",
+        body: "员工打卡中",
+        hehezi: "员工打卡中",
+        xiaobai: "员工打卡中",
+        xiaomao: "员工打卡中",
+        azhu: "员工打卡中",
+        outsource: "员工打卡中",
+        ai: "员工打卡中",
+        intern: "员工打卡中",
+        dog: "员工打卡中",
+        bg: "正在打扫工位",
+        bgSpeed: "正在开灯",
+        bgBomb: "咖啡机预热中",
+        coffee: "咖啡机预热中",
+        pot: "正在进行心理建设",
+        dice: "整理桌游",
+        layoff: "打印机连接中",
+        bob: "咖啡机预热中",
       };
+
+      function getLoadingTip(assetKey) {
+        return assetLoadingTips[assetKey] || "正在整理办公桌";
+      }
 
       function sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
 
-      function drawLoadingScreen(progress, currentName = "") {
+      function drawLoadingScreen(progress, currentTip = "") {
         ctx.save();
         ctx.fillStyle = "#111";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1862,15 +2496,21 @@
         ctx.fill();
 
         ctx.fillStyle = "white";
-        ctx.font = "bold 28px sans-serif";
+        ctx.font = "bold 20px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("🐻 贪吃熊", canvas.width / 2, canvas.height / 2 - 58);
+        ctx.fillText(
+          "打工人生存法则",
+          canvas.width / 2,
+          canvas.height / 2 - 68,
+        );
+        ctx.font = "bold 24px sans-serif";
+        ctx.fillText("贪吃经理", canvas.width / 2, canvas.height / 2 - 42);
 
         ctx.font = "16px sans-serif";
         ctx.fillText(
-          "正在加载游戏资源...",
+          currentTip || "正在整理办公桌",
           canvas.width / 2,
-          canvas.height / 2 - 24,
+          canvas.height / 2 - 16,
         );
 
         const barX = 72;
@@ -1888,11 +2528,11 @@
         ctx.font = "bold 18px sans-serif";
         ctx.fillText(`${progress}%`, canvas.width / 2, canvas.height / 2 + 45);
 
-        if (currentName) {
+        if (currentTip) {
           ctx.font = "12px sans-serif";
           ctx.fillStyle = "rgba(255,255,255,0.6)";
           ctx.fillText(
-            `正在加载：${currentName}`,
+            "请稍等，员工马上到岗",
             canvas.width / 2,
             canvas.height / 2 + 68,
           );
@@ -1915,37 +2555,16 @@
         ctx.closePath();
       }
 
-      function updateLoadingUI(progress, currentName = "", assetStates = {}) {
+      function updateLoadingUI(progress, assetKey = "") {
+        const tip =
+          progress >= 100 ? "全员到岗，准备开工！" : getLoadingTip(assetKey);
+
         startBtn.textContent = `资源加载中 ${progress}%`;
         loadingBar.style.width = `${progress}%`;
         loadingPercent.textContent = `${progress}%`;
-
-        if (progress >= 100) {
-          loadingText.textContent = "资源加载完成，准备开始！";
-        } else if (currentName) {
-          loadingText.textContent = `正在加载：${currentName}`;
-        } else {
-          loadingText.textContent = "正在加载游戏资源...";
-        }
-
-        const rows = Object.entries(assetDisplayNames)
-          .map(([key, label]) => {
-            const state = assetStates[key] || "pending";
-            if (state === "done") {
-              return `<div class="loadingAssetDone">✔ ${label}</div>`;
-            }
-            if (state === "failed") {
-              return `<div class="loadingAssetFailed">✘ ${label} 加载失败</div>`;
-            }
-            if (state === "current") {
-              return `<div class="loadingAssetCurrent">⏳ ${label}</div>`;
-            }
-            return `<div>○ ${label}</div>`;
-          })
-          .join("");
-
-        loadingAssetList.innerHTML = rows;
-        drawLoadingScreen(progress, currentName);
+        loadingText.textContent = tip;
+        loadingAssetList.innerHTML = "";
+        drawLoadingScreen(progress, tip);
       }
 
       function preloadImages() {
@@ -1954,25 +2573,20 @@
         const assetStates = {};
         let loaded = 0;
 
-        updateLoadingUI(0, "", assetStates);
+        updateLoadingUI(0, "");
 
         return Promise.all(
           imageList.map(
             ([name, img]) =>
               new Promise((resolve) => {
-                const displayName = assetDisplayNames[name] || name;
                 assetStates[name] = "current";
-                updateLoadingUI(
-                  Math.round((loaded / total) * 100),
-                  displayName,
-                  assetStates,
-                );
+                updateLoadingUI(Math.round((loaded / total) * 100), name);
 
                 function finish(success) {
                   loaded += 1;
                   assetStates[name] = success ? "done" : "failed";
                   const progress = Math.round((loaded / total) * 100);
-                  updateLoadingUI(progress, displayName, assetStates);
+                  updateLoadingUI(progress, name);
                   resolve();
                 }
 
