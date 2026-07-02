@@ -115,28 +115,120 @@
         pointer-events: none;
       }
 
-      #statusBar {
+      #statusPanel {
         width: 100%;
         max-width: 100%;
-        height: 32px;
-        min-height: 32px;
-        max-height: 32px;
-        padding: 5px 12px;
         margin-bottom: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        pointer-events: none;
+      }
+
+      #buffRow {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+      }
+
+      .buffStatus {
+        height: 24px;
         box-sizing: border-box;
         border-radius: 999px;
-        background: rgba(0, 0, 0, 0.42);
-        color: rgba(255, 255, 255, 0.86);
-        font-size: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(0, 0, 0, 0.44);
+        color: rgba(255, 255, 255, 0.38);
+        font-size: 12px;
         font-weight: bold;
         line-height: 22px;
         text-align: center;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        transition: color 0.12s linear;
-        pointer-events: none;
         text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45);
+      }
+
+      .buffStatus.active {
+        color: white;
+      }
+
+      #teamStatus.active {
+        border-color: rgba(77, 208, 225, 0.92);
+        background: rgba(77, 208, 225, 0.26);
+        box-shadow:
+          0 0 10px rgba(77, 208, 225, 0.45),
+          inset 0 0 12px rgba(77, 208, 225, 0.2);
+      }
+
+      #hrStatus.active {
+        border-color: rgba(179, 136, 255, 0.95);
+        background: rgba(179, 136, 255, 0.25);
+        box-shadow:
+          0 0 10px rgba(179, 136, 255, 0.42),
+          inset 0 0 12px rgba(179, 136, 255, 0.18);
+      }
+
+      #shieldStatus.active {
+        border-color: rgba(52, 226, 122, 0.95);
+        background: rgba(52, 226, 122, 0.24);
+        box-shadow:
+          0 0 10px rgba(52, 226, 122, 0.45),
+          inset 0 0 12px rgba(52, 226, 122, 0.18);
+      }
+
+      #overtimeBar {
+        position: relative;
+        width: 100%;
+        height: 30px;
+        box-sizing: border-box;
+        border-radius: 999px;
+        border: 2px solid rgba(255, 255, 255, 0.28);
+        background: rgba(0, 0, 0, 0.58);
+        overflow: hidden;
+        box-shadow:
+          0 0 10px rgba(255, 255, 255, 0.12),
+          inset 0 0 12px rgba(0, 0, 0, 0.85);
+      }
+
+      #overtimeFill {
+        position: absolute;
+        left: 3px;
+        top: 3px;
+        bottom: 3px;
+        width: calc(100% - 6px);
+        border-radius: 999px;
+        background: linear-gradient(90deg, #555, #777);
+        transform: scaleX(1);
+        transform-origin: left center;
+        transition:
+          transform 0.1s linear,
+          background 0.16s linear;
+        box-shadow:
+          inset 0 2px 5px rgba(255, 255, 255, 0.32),
+          0 0 10px rgba(255, 255, 255, 0.12);
+      }
+
+      #overtimeText {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 12px;
+        box-sizing: border-box;
+        color: white;
+        font-size: 14px;
+        font-weight: 900;
+        line-height: 30px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-shadow:
+          0 2px 4px rgba(0, 0, 0, 0.95),
+          0 0 4px rgba(0, 0, 0, 0.9);
       }
 
       #controlButtons {
@@ -182,6 +274,8 @@
       #restartBtn {
         display: none;
         background: #ffb800;
+        opacity: 0;
+        transition: opacity 0.45s ease;
       }
 
       #loadingOverlay {
@@ -292,13 +386,24 @@
           font-size: clamp(18px, 6vw, 30px);
         }
 
-        #statusBar {
-          height: 30px;
-          min-height: 30px;
-          max-height: 30px;
+        #statusPanel {
           margin-bottom: 6px;
-          font-size: 13px;
-          line-height: 20px;
+          gap: 4px;
+        }
+
+        .buffStatus {
+          height: 23px;
+          font-size: 11px;
+          line-height: 21px;
+        }
+
+        #overtimeBar {
+          height: 28px;
+        }
+
+        #overtimeText {
+          font-size: 12px;
+          line-height: 28px;
         }
 
         #controlButtons {
@@ -337,9 +442,10 @@
           padding: 8px 10px;
           display: grid;
           grid-template-columns: min(72vw, calc(100svh - 76px)) auto;
-          grid-template-rows: auto min(72vw, calc(100svh - 76px));
+          grid-template-rows: auto auto min(72vw, calc(100svh - 106px));
           grid-template-areas:
             "top controls"
+            "status controls"
             "game controls";
           justify-content: center;
           align-content: center;
@@ -361,10 +467,17 @@
           white-space: nowrap;
         }
 
+        #statusPanel {
+          grid-area: status;
+          width: 100%;
+          margin: 0;
+          gap: 3px;
+        }
+
         #gameArea {
           grid-area: game;
-          width: min(72vw, calc(100svh - 76px));
-          height: min(72vw, calc(100svh - 76px));
+          width: min(72vw, calc(100svh - 106px));
+          height: min(72vw, calc(100svh - 106px));
         }
 
         #bottomBar {
@@ -376,19 +489,20 @@
           flex-direction: column;
         }
 
-        #statusBar {
-          width: 132px;
-          max-width: 132px;
-          height: 28px;
-          min-height: 28px;
-          max-height: 28px;
-          margin-bottom: 8px;
-          padding: 4px 8px;
-          font-size: 12px;
-          line-height: 20px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+        .buffStatus {
+          height: 21px;
+          font-size: 10px;
+          line-height: 19px;
+        }
+
+        #overtimeBar {
+          height: 25px;
+        }
+
+        #overtimeText {
+          font-size: 11px;
+          line-height: 25px;
+          padding: 0 6px;
         }
 
         #controlButtons {
@@ -439,7 +553,17 @@
         </div>
       </div>
 
-      <div id="statusBar">☕ 正常上班</div>
+      <div id="statusPanel">
+        <div id="buffRow">
+          <div id="teamStatus" class="buffStatus">🎲 团建 --</div>
+          <div id="hrStatus" class="buffStatus">📉 裁员 --</div>
+          <div id="shieldStatus" class="buffStatus">🛡 背锅 --</div>
+        </div>
+        <div id="overtimeBar">
+          <div id="overtimeFill"></div>
+          <div id="overtimeText">正常上班 工资×1</div>
+        </div>
+      </div>
 
       <div id="gameArea">
         <canvas id="game" width="384" height="384"></canvas>
@@ -471,7 +595,7 @@
     <div id="version"></div>
 
     <script>
-      const GAME_VERSION = "v1.8.5";
+      const GAME_VERSION = "v1.8.8.5";
 
       // ==================== 调试参数 / Game Balance ====================
 
@@ -485,7 +609,8 @@
       // 游戏节奏
       const speed = 200; // 普通速度，越小越快
       const maxSpeedLevel = 5; // 加班阶段：0正常，1提提神，2轻度加班，3中度加班，4疯狂加班，5通宵爆肝，5通宵爆肝
-      const speedLevelDurations = [0, 5000, 3000, 3000, 3000, 5000]; // 第0项不用，提提神5秒，轻/中/疯狂3秒，通宵爆肝5秒
+      const speedLevelDurations = [0, 7000, 7000, 9000, 7000, 5000]; // 第0项不用，提提神7秒，轻度7秒，中度9秒，疯狂7秒，通宵5秒
+      const coffeeExtendTime = 3000; // 吃咖啡先续杯3秒；续杯后超过当前阶段最大时长才升档
       const speedLevelDelays = [240, 200, 190, 175, 150, 125]; // 每阶段速度
       const scoreMultipliers = [1, 1, 2, 2, 3, 4]; // 工资倍率：正常x1，提提神x1，轻度x2，中度x2，疯狂x3，通宵x4
       const speedInfoFontSize = 12; // 状态栏字体大小
@@ -526,11 +651,24 @@
       const outsourceBodyCount = 5; // 吃外包组长增加几个外包员工身体
 
       // 死亡反馈
-      const deathFreezeTime = 2000; // 死亡后冻结停留时间(ms)
-      const deathSlowMotionScale = 0.35; // 死亡瞬间慢动作比例，越小越慢
-      const deathOverlayMaxAlpha = 1.0; // 死亡黑色遮罩最大透明度
-      const deathShakeDuration = 450; // 撞击后身体震动时长(ms)
-      const deathShakeStrength = 4; // 身体震动强度(px)
+      const deathFreezeTime = 2000; // 死亡后停留多久再显示重新开始(ms)
+      const deathOverlayMaxAlpha = 0.72; // 死亡黑色遮罩最大透明度，保留尸体可见
+      const deathShakeDuration = 260; // 撞击后身体震动时长(ms)
+      const deathShakeStrength = 3.5; // 身体震动强度(px)
+      const deathBurstDuration = 620; // 死亡白光爆炸持续时间(ms)
+      const deathBurstMaxRadius = 58; // 死亡白光爆炸最大半径(px)
+      const deathBurstParticleCount = 12; // 死亡爆炸光点数量
+      const deathBodyWhitenStart = 160; // 蛇身开始白化延迟(ms)
+      const deathBodyWhitenStep = 95; // 白化沿身体传播间隔(ms)，拉开间隔保证一节一节变白
+      const deathBodyWhitenAlpha = 0.52; // 蛇身最终白化程度，头像仍可辨认
+      const deathBodyWhitenFadeDuration = 60; // 每节身体白化过渡时间(ms)，越短越像逐节点亮
+
+      // 蛇身连接视觉
+      const bodyConnectorEnabled = true; // true：蛇身之间绘制胶囊连接底色，头像仍按格子显示
+      const bodyConnectorWidth = 24; // 胶囊连接主宽度(px)
+      const bodyConnectorInnerWidth = 13; // 胶囊连接内层高光宽度(px)
+      const bodyConnectorColor = "rgba(0, 0, 0, 0.55)"; // 胶囊连接底色
+      const bodyConnectorHighlight = "rgba(255, 255, 255, 0.16)"; // 胶囊连接内层高光
 
       // 地图对象概率（正常上班）
       const normalFoodRate = 0.24; // 普通职员
@@ -566,89 +704,95 @@
       // 疯狂加班：开始刷锅/背锅侠。
       // 通宵爆肝：最高阶段，工资x4，结束后直接回到正常上班。
       const stageSpawnRates = [
+        // 正常上班：普通贪吃蛇，咖啡降低，避免过快进入加班。
         {
-          normal: 0.28,
-          coffee: 0.18,
+          normal: 0.32,
+          coffee: 0.14,
           triple: 0.13,
-          azhu: 0.08,
-          ai: 0.09,
+          azhu: 0.07,
+          ai: 0.08,
           intern: 0.12,
-          dog: 0.12,
+          dog: 0.14,
           layoff: 0,
           pot: 0,
           dice: 0,
           boss: 0,
         },
+        // Lv1 提提神：团建特色，爽感明显。
         {
-          normal: 0.25,
-          coffee: 0.22,
-          triple: 0.12,
-          azhu: 0.08,
-          ai: 0.1,
-          intern: 0.1,
-          dog: 0.07,
-          layoff: 0,
-          pot: 0,
-          dice: 0.04,
-          boss: 0,
-        },
-        {
-          normal: 0.2,
-          coffee: 0.24,
-          triple: 0.1,
-          azhu: 0.08,
-          ai: 0.11,
+          normal: 0.24,
+          coffee: 0.18,
+          triple: 0.11,
+          azhu: 0.07,
+          ai: 0.08,
           intern: 0.09,
           dog: 0.07,
           layoff: 0,
           pot: 0,
-          dice: 0.05,
-          boss: 0.06,
+          dice: 0.16,
+          boss: 0,
         },
+        // Lv2 轻度加班：开始有老板，风险可感知。
+        {
+          normal: 0.21,
+          coffee: 0.15,
+          triple: 0.1,
+          azhu: 0.08,
+          ai: 0.1,
+          intern: 0.08,
+          dog: 0.07,
+          layoff: 0,
+          pot: 0,
+          dice: 0.07,
+          boss: 0.14,
+        },
+        // Lv3 中度加班：最佳维持阶段，裁员高、Boss低。
         {
           normal: 0.17,
-          coffee: 0.24,
+          coffee: 0.14,
           triple: 0.09,
           azhu: 0.1,
-          ai: 0.12,
-          intern: 0.08,
+          ai: 0.11,
+          intern: 0.07,
           dog: 0.06,
-          layoff: 0.06,
+          layoff: 0.16,
           pot: 0,
-          dice: 0.05,
-          boss: 0.03,
+          dice: 0.04,
+          boss: 0.06,
         },
+        // Lv4 疯狂加班：高风险高回报，背锅侠给高手操作空间。
         {
-          normal: 0.14,
-          coffee: 0.24,
-          triple: 0.08,
-          azhu: 0.12,
-          ai: 0.13,
-          intern: 0.06,
-          dog: 0.05,
-          layoff: 0.06,
-          pot: 0.05,
-          dice: 0.05,
-          boss: 0.02,
+          normal: 0.12,
+          coffee: 0.12,
+          triple: 0.07,
+          azhu: 0.1,
+          ai: 0.11,
+          intern: 0.05,
+          dog: 0.04,
+          layoff: 0.07,
+          pot: 0.12,
+          dice: 0.03,
+          boss: 0.17,
         },
+        // Lv5 通宵爆肝：最高风险爆发，Boss最高、咖啡最低。
         {
           normal: 0.1,
-          coffee: 0.24,
-          triple: 0.08,
-          azhu: 0.13,
-          ai: 0.15,
+          coffee: 0.09,
+          triple: 0.07,
+          azhu: 0.12,
+          ai: 0.13,
           intern: 0.05,
           dog: 0.04,
           layoff: 0.07,
           pot: 0.06,
-          dice: 0.06,
-          boss: 0.02,
+          dice: 0.02,
+          boss: 0.25,
         },
       ];
 
       // 食物数量
       const normalFoodCount = 3; // 普通模式食物数量
-      const speedModeFoodCounts = [3, 4, 6, 8, 10, 15]; // 0正常，1提提神，2轻度加班，3中度加班，4疯狂加班，5通宵爆肝，5通宵爆肝
+      const speedModeFoodCounts = [3, 4, 5, 7, 9, 10]; // 0正常，1提提神，2轻度加班，3中度加班，4疯狂加班，5通宵爆肝
 
       // 食物消失
       const foodLifeRandomOffset = 5000; // 食物出生时间随机偏移，避免一起消失
@@ -720,7 +864,17 @@
       const pauseBtn = document.getElementById("pauseBtn");
       const fullscreenBtn = document.getElementById("fullscreenBtn");
       const musicBtn = document.getElementById("musicBtn");
-      const statusBar = document.getElementById("statusBar");
+      const statusPanel = document.getElementById("statusPanel");
+      const teamStatus = document.getElementById("teamStatus");
+      const hrStatus = document.getElementById("hrStatus");
+      const shieldStatus = document.getElementById("shieldStatus");
+      const overtimeBar = document.getElementById("overtimeBar");
+      const overtimeFill = document.getElementById("overtimeFill");
+      const overtimeText = document.getElementById("overtimeText");
+      const statusUiUpdateInterval = 100; // 状态栏每0.1秒刷新一次，避免DOM更新拖慢canvas帧率
+      let lastStatusUiUpdateTime = 0;
+      let currentOvertimeColorState = "normal";
+      let statusUiFrozen = false; // 死亡后冻结状态栏，避免重新开始按钮出现后阶段跳变
       const startHint = document.getElementById("startHint");
       const versionEl = document.getElementById("version");
       const loadingOverlay = document.getElementById("loadingOverlay");
@@ -796,6 +950,9 @@
       let deathPending = false;
       let deathStartTime = 0;
       let deathIsBomb = false;
+      let deathFinalMoveProgress = 1;
+      let deathFrozenBackground = null;
+      let deathRestartDelay = deathFreezeTime;
       let musicEnabled = true;
       let assetsLoaded = false;
       musicBtn.textContent = "🔊音乐";
@@ -858,6 +1015,10 @@
         deathPending = false;
         deathStartTime = 0;
         deathIsBomb = false;
+        deathFinalMoveProgress = 1;
+        deathFrozenBackground = null;
+        deathRestartDelay = deathFreezeTime;
+        statusUiFrozen = false;
         speedModeEndTime = 0;
         speedLevel = 0;
         hrModeEndTime = 0;
@@ -871,6 +1032,7 @@
 
         scoreEl.textContent = score;
         restartBtn.style.display = "none";
+        updateModeStatus(true);
         fillFoods();
 
         if (!animationId) {
@@ -1512,10 +1674,31 @@
       }
 
       function startSpeedMode() {
-        speedLevel = Math.min(speedLevel + 1, maxSpeedLevel);
-        speedModeEndTime = getGameTime() + getSpeedLevelDuration(speedLevel);
+        const now = getGameTime();
+
+        // 咖啡机制：先续杯3秒；只有续杯后超过当前阶段最大持续时间，才升档。
+        if (speedLevel <= 0 || !isSpeedMode()) {
+          speedLevel = 1;
+          speedModeEndTime = now + getSpeedLevelDuration(speedLevel);
+        } else {
+          const currentLevelDuration = getSpeedLevelDuration(speedLevel);
+          const remainingTime = Math.max(0, speedModeEndTime - now);
+          const extendedTime = remainingTime + coffeeExtendTime;
+
+          if (
+            extendedTime > currentLevelDuration &&
+            speedLevel < maxSpeedLevel
+          ) {
+            speedLevel += 1;
+            speedModeEndTime = now + getSpeedLevelDuration(speedLevel);
+          } else {
+            speedModeEndTime =
+              now + Math.min(extendedTime, currentLevelDuration);
+          }
+        }
+
         updateSpeedModeDelay();
-        updateModeStatus();
+        updateModeStatus(true);
         fillFoods();
       }
 
@@ -1541,7 +1724,7 @@
           updateSpeedModeDelay();
         }
 
-        updateModeStatus();
+        updateModeStatus(true);
         fillFoods();
       }
 
@@ -1837,16 +2020,36 @@
         deathPending = true;
         deathStartTime = getGameTime();
         deathIsBomb = isBomb;
+        deathFinalMoveProgress = 1; // 死亡时直接定格在撞击后的最后一帧
+        deathFrozenBackground = getCurrentBackgroundImage(); // 普通死亡锁定当时背景，避免之后二次变暗/变色
+        deathRestartDelay = Math.max(
+          deathFreezeTime,
+          deathBodyWhitenStart + Math.max(0, snake.length - 1) * deathBodyWhitenStep + 260,
+        );
+        moveProgress = deathFinalMoveProgress;
         bombGameOver = false;
         restartBtn.style.display = "none";
+        restartBtn.style.opacity = "0";
+        updateModeStatus(true); // 死亡瞬间立刻刷新到撞击时刻
+        statusUiFrozen = true; // 之后不再刷新状态栏，避免按钮出现后跳到另一个阶段
         playSound(gameOverSound);
       }
 
       function finishDeath() {
+        if (gameOver) return;
         deathPending = false;
         bombGameOver = deathIsBomb;
+        if (deathIsBomb) {
+          // Boss死亡：显示重新开始时切换到Boss失败背景。
+          deathFrozenBackground = null;
+        }
         gameOver = true;
+        moveProgress = deathFinalMoveProgress;
+        // 状态栏保持死亡瞬间，不再刷新。
         restartBtn.style.display = "inline-block";
+        requestAnimationFrame(() => {
+          restartBtn.style.opacity = "1";
+        });
       }
 
       function gameOverNow(isBomb = false) {
@@ -1859,13 +2062,32 @@
         drawBackground();
 
         if (gameOver) {
+          foods.forEach(drawFood);
+          drawDeathOverlay(true);
+          drawSnake();
           drawGameOverText();
           return;
         }
 
-        updateTeamAbsorbAnimations();
+        if (!deathPending) {
+          updateTeamAbsorbAnimations();
+        }
         foods.forEach(drawFood);
-        updateModeStatus();
+        if (!deathPending) updateModeStatus();
+
+        if (deathPending) {
+          // 黑色遮罩放在蛇身白化层下面，确保死亡后的蛇仍然清楚。
+          drawDeathOverlay(false);
+          drawSnake();
+          drawDeathHeadBurst();
+
+          if (getGameTime() - deathStartTime >= deathRestartDelay) {
+            finishDeath();
+          }
+
+          return;
+        }
+
         drawSnake();
         drawShieldEffect();
         drawTeamAbsorbAnimations();
@@ -1876,25 +2098,22 @@
           return;
         }
 
-        if (deathPending) {
-          drawDeathOverlay();
-
-          if (getGameTime() - deathStartTime >= deathFreezeTime) {
-            finishDeath();
-          }
-
-          return;
-        }
-
         pulseTime += foodPulseSpeed * 0.25;
       }
 
-      function drawBackground() {
-        const bg = bombGameOver
+      function getCurrentBackgroundImage() {
+        return bombGameOver
           ? images.bgBomb
           : isSpeedMode()
             ? images.bgSpeed
             : images.bg;
+      }
+
+      function drawBackground() {
+        const bg =
+          deathFrozenBackground && (deathPending || (gameOver && !bombGameOver))
+            ? deathFrozenBackground
+            : getCurrentBackgroundImage();
         ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
         ctx.fillStyle = `rgba(0,0,0,${bgMask})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1907,12 +2126,14 @@
         ctx.fillText(
           bombGameOver ? "" : "队伍不好带啊~",
           canvas.width / 2,
-          canvas.height / 2 - 30,
+          canvas.height / 2 - 76,
         );
       }
 
-      function drawDeathOverlay() {
-        const elapsed = getGameTime() - deathStartTime;
+      function drawDeathOverlay(frozen = false) {
+        const elapsed = frozen
+          ? deathFreezeTime
+          : getGameTime() - deathStartTime;
         const progress = Math.min(elapsed / deathFreezeTime, 1);
         const alpha = deathOverlayMaxAlpha * progress;
 
@@ -1920,6 +2141,158 @@
         ctx.fillStyle = `rgba(0,0,0,${alpha})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.restore();
+      }
+
+      function getDeathElapsed() {
+        if (!deathStartTime) return 0;
+        return gameOver ? deathRestartDelay : getGameTime() - deathStartTime;
+      }
+
+      function getDeathWhitenAlpha(index) {
+        if (!deathPending && !gameOver) return 0;
+        const elapsed = getDeathElapsed();
+        if (index === 0) return 1;
+        const start = deathBodyWhitenStart + (index - 1) * deathBodyWhitenStep;
+        const progress = Math.min(
+          Math.max((elapsed - start) / deathBodyWhitenFadeDuration, 0),
+          1,
+        );
+        return deathBodyWhitenAlpha * progress;
+      }
+
+      function drawWhiteImageOverlay(
+        img,
+        x,
+        y,
+        drawSize,
+        angle,
+        alpha,
+        shadowBlur = 0,
+      ) {
+        if (alpha <= 0) return;
+        ctx.save();
+        ctx.translate(x + drawSize / 2, y + drawSize / 2);
+        ctx.rotate(angle);
+        ctx.globalAlpha = alpha;
+        if (shadowBlur > 0) {
+          ctx.shadowColor = deathIsBomb ? "#ffb0a0" : "white";
+          ctx.shadowBlur = shadowBlur;
+        }
+        // Canvas filter 保留图片 alpha，只把不透明头像区域变白。
+        ctx.filter = "brightness(0) invert(1)";
+        ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+        ctx.restore();
+      }
+
+      function drawDeathWhiteHead(x, y, drawSize, angle, alpha = 1) {
+        drawWhiteImageOverlay(
+          images.headEat || images.head,
+          x,
+          y,
+          drawSize,
+          angle,
+          alpha,
+          30,
+        );
+      }
+
+      function drawDeathHeadBurst() {
+        if (!deathPending || snake.length <= 0) return;
+
+        const elapsed = getGameTime() - deathStartTime;
+        const progress = Math.min(elapsed / deathBurstDuration, 1);
+        const fade = Math.max(0, 1 - progress);
+        const head = snake[0];
+        const prev = prevSnake[0] || head;
+        const pos = getRenderPosition(head, prev);
+        const drawPositions = getWrappedDrawPositions(pos.x, pos.y);
+        const direction = getDirectionFromTo(prev, head);
+        const angle = getAngleByDirection(direction);
+
+        drawPositions.forEach((drawPos) => {
+          const cx = drawPos.x + size / 2;
+          const cy = drawPos.y + size / 2;
+          const burstRadius = size * 0.65 + deathBurstMaxRadius * progress;
+          const coreRadius =
+            size * (1.05 + 0.25 * Math.sin(progress * Math.PI));
+
+          ctx.save();
+          ctx.globalCompositeOperation = "lighter";
+
+          const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, burstRadius);
+          glow.addColorStop(0, `rgba(255,255,255,${0.95 * fade})`);
+          glow.addColorStop(
+            0.28,
+            deathIsBomb
+              ? `rgba(255,165,135,${0.62 * fade})`
+              : `rgba(255,245,180,${0.62 * fade})`,
+          );
+          glow.addColorStop(
+            0.62,
+            deathIsBomb
+              ? `rgba(255,70,70,${0.25 * fade})`
+              : `rgba(120,210,255,${0.28 * fade})`,
+          );
+          glow.addColorStop(1, "rgba(255,255,255,0)");
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(cx, cy, burstRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = `rgba(255,255,255,${0.9 * fade})`;
+          ctx.lineWidth = 3;
+          ctx.shadowColor = "white";
+          ctx.shadowBlur = 22;
+          ctx.beginPath();
+          ctx.arc(
+            cx,
+            cy,
+            size * 0.62 + deathBurstMaxRadius * 0.62 * progress,
+            0,
+            Math.PI * 2,
+          );
+          ctx.stroke();
+
+          for (let i = 0; i < deathBurstParticleCount; i++) {
+            const a = (Math.PI * 2 * i) / deathBurstParticleCount + 0.35;
+            const dist = size * 0.35 + deathBurstMaxRadius * 0.75 * progress;
+            const px = cx + Math.cos(a) * dist;
+            const py = cy + Math.sin(a) * dist;
+            const r = 2.2 + (i % 3) * 0.8;
+            ctx.fillStyle = `rgba(255,255,255,${0.8 * fade})`;
+            ctx.beginPath();
+            ctx.arc(px, py, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.restore();
+
+          // 白化蛇头：只对白头像素生效，PNG透明区域不会被染成白色方块。
+          drawDeathWhiteHead(
+            drawPos.x,
+            drawPos.y,
+            size,
+            angle,
+            0.82 + 0.16 * fade,
+          );
+
+          ctx.save();
+          ctx.globalCompositeOperation = "lighter";
+          ctx.strokeStyle = `rgba(255,255,255,${0.85 * fade})`;
+          ctx.lineWidth = 2;
+          ctx.shadowColor = "white";
+          ctx.shadowBlur = 14;
+          for (let i = 0; i < 8; i++) {
+            const a = (Math.PI * 2 * i) / 8 + progress * 0.8;
+            const inner = coreRadius * 0.45;
+            const outer = coreRadius * (1.1 + progress * 1.1);
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
+            ctx.lineTo(cx + Math.cos(a) * outer, cy + Math.sin(a) * outer);
+            ctx.stroke();
+          }
+          ctx.restore();
+        });
       }
 
       function drawPauseOverlay() {
@@ -2038,81 +2411,127 @@
         return "☕正常";
       }
 
-      function updateModeStatus() {
-        if (!statusBar) return;
+      function updateModeStatus(force = false) {
+        if (statusUiFrozen) return;
+        const uiNow = performance.now();
+        if (!force && uiNow - lastStatusUiUpdateTime < statusUiUpdateInterval) {
+          return;
+        }
+        lastStatusUiUpdateTime = uiNow;
 
-        const fullParts = [];
-        const shortParts = [];
-        let color = "rgba(255, 255, 255, 0.78)";
+        updateBuffStatusCell(
+          teamStatus,
+          isTeamMode(),
+          "🎲 团建",
+          teamModeEndTime,
+        );
+        updateBuffStatusCell(hrStatus, isHrMode(), "📉 裁员", hrModeEndTime);
+        updateBuffStatusCell(
+          shieldStatus,
+          isShieldMode(),
+          "🛡 背锅",
+          shieldModeEndTime,
+        );
+        updateOvertimeBar();
+      }
 
-        if (isSpeedMode()) {
-          const remain = Math.max(
-            0,
-            Math.ceil((speedModeEndTime - getGameTime()) / 1000),
-          );
-          const multiplier = getScoreMultiplier();
-          const stageName = getWorkStageName(speedLevel);
-          const shortName = getWorkStageShortName(speedLevel);
+      function updateBuffStatusCell(el, active, label, endTime) {
+        if (!el) return;
 
-          fullParts.push(`${stageName} 工资×${multiplier} ${remain}s`);
-          shortParts.push(`${shortName}×${multiplier} ${remain}s`);
-
-          if (isMaxSpeedMode()) {
-            color = getRainbowColor();
-          } else {
-            color = resolveDrawColor(getMultiplierColor());
-          }
+        if (!active) {
+          el.classList.remove("active");
+          el.textContent = `${label} --`;
+          return;
         }
 
-        if (isShieldMode()) {
-          const remain = Math.max(
-            0,
-            Math.ceil((shieldModeEndTime - getGameTime()) / 1000),
-          );
-          fullParts.push(`🛡️ 背锅中 ${remain}s`);
-          shortParts.push(`🛡️${remain}s`);
-          if (!isSpeedMode()) color = shieldInfoColor;
+        const remain = Math.max(0, (endTime - getGameTime()) / 1000);
+        el.classList.add("active");
+        el.textContent = `${label} ${formatRemain(remain)}`;
+      }
+
+      function updateOvertimeBar() {
+        if (!overtimeBar || !overtimeFill || !overtimeText) return;
+
+        if (!isSpeedMode()) {
+          overtimeText.textContent = "正常上班 工资×1";
+          overtimeFill.style.transform = "scaleX(1)";
+          setOvertimeBarColor("normal");
+          return;
         }
 
-        if (isTeamMode()) {
-          const remain = Math.max(
-            0,
-            Math.ceil((teamModeEndTime - getGameTime()) / 1000),
-          );
-          fullParts.push(`🎲 团建中 ${remain}s`);
-          shortParts.push(`🎲${remain}s`);
-          if (!isSpeedMode() && !isShieldMode()) color = teamInfoColor;
+        const duration = getSpeedLevelDuration(speedLevel);
+        const remainMs = Math.max(0, speedModeEndTime - getGameTime());
+        const remainSec = remainMs / 1000;
+        const durationSec = duration / 1000;
+        const progress = Math.max(0, Math.min(remainMs / duration, 1));
+        const multiplier = getScoreMultiplier();
+        const stageName = getWorkStageBarName(speedLevel);
+
+        overtimeText.textContent = `${stageName} 工资×${multiplier} ${formatRemain(remainSec)} / ${formatDuration(durationSec)}`;
+        overtimeFill.style.transform = `scaleX(${progress})`;
+
+        if (remainMs <= 1000) {
+          setOvertimeBarColor("danger");
+        } else if (
+          speedLevel < maxSpeedLevel &&
+          remainMs + coffeeExtendTime > duration
+        ) {
+          setOvertimeBarColor("upgrade");
+        } else {
+          setOvertimeBarColor("extend");
         }
+      }
 
-        if (isHrMode()) {
-          const remain = Math.max(
-            0,
-            Math.ceil((hrModeEndTime - getGameTime()) / 1000),
-          );
-          fullParts.push(`📉 裁员中 ${remain}s`);
-          shortParts.push(`📉${remain}s`);
-          if (!isSpeedMode() && !isShieldMode() && !isTeamMode())
-            color = hrInfoColor;
-        }
+      function setOvertimeBarColor(state) {
+        if (!overtimeBar || !overtimeFill) return;
+        if (currentOvertimeColorState === state) return;
+        currentOvertimeColorState = state;
 
-        if (fullParts.length === 0) {
-          fullParts.push("☕ 正常上班");
-          shortParts.push("☕ 正常");
-        }
+        const colorMap = {
+          normal: {
+            border: "rgba(255, 255, 255, 0.28)",
+            shadow: "rgba(255, 255, 255, 0.12)",
+            fill: "linear-gradient(90deg, #555, #777)",
+          },
+          extend: {
+            border: "rgba(255, 184, 0, 0.86)",
+            shadow: "rgba(255, 184, 0, 0.42)",
+            fill: "linear-gradient(90deg, #ffdf31, #ffb300)",
+          },
+          upgrade: {
+            border: "rgba(52, 226, 122, 0.92)",
+            shadow: "rgba(52, 226, 122, 0.45)",
+            fill: "linear-gradient(90deg, #ffe04a, #31d857)",
+          },
+          danger: {
+            border: "rgba(255, 68, 68, 0.95)",
+            shadow: "rgba(255, 68, 68, 0.48)",
+            fill: "linear-gradient(90deg, #ffcf2e, #ff4444)",
+          },
+        };
 
-        const fullText = fullParts.join("  ");
-        const shortText = shortParts.join("  ");
-        statusBar.textContent = fullText;
+        const colors = colorMap[state] || colorMap.normal;
+        overtimeBar.style.borderColor = colors.border;
+        overtimeBar.style.boxShadow = `0 0 10px ${colors.shadow}, inset 0 0 12px rgba(0, 0, 0, 0.85)`;
+        overtimeFill.style.background = colors.fill;
+        overtimeFill.style.boxShadow = `inset 0 2px 5px rgba(255, 255, 255, 0.32), 0 0 10px ${colors.shadow}`;
+      }
 
-        requestAnimationFrame(() => {
-          if (!statusBar) return;
-          statusBar.textContent = fullText;
-          if (statusBar.scrollWidth > statusBar.clientWidth) {
-            statusBar.textContent = shortText;
-          }
-        });
+      function getWorkStageBarName(level) {
+        if (level === 1) return "提提神";
+        if (level === 2) return "轻度加班";
+        if (level === 3) return "中度加班";
+        if (level === 4) return "疯狂加班";
+        if (level >= 5) return "通宵爆肝";
+        return "正常上班";
+      }
 
-        statusBar.style.color = color;
+      function formatRemain(seconds) {
+        return `${Math.max(0, seconds).toFixed(1)}s`;
+      }
+
+      function formatDuration(seconds) {
+        return `${Math.round(seconds)}s`;
       }
 
       function drawScorePopups() {
@@ -2175,18 +2594,149 @@
       function drawSnake() {
         const shake = getDeathShakeOffset();
 
-        snake.forEach((p, index) => {
-          const prev = prevSnake[index] || p;
-          const pos = getRenderPosition(p, prev);
-          const x = pos.x + shake.x;
-          const y = pos.y + shake.y;
+        // 胶囊连接底色先画在头像下面，只改变视觉连续性，不改变碰撞逻辑。
+        drawBodyConnectors(shake);
 
+        // 先画身体，再画蛇头，确保死亡定格时蛇头永远在最上层。
+        for (let index = snake.length - 1; index >= 1; index--) {
+          drawSnakeSegment(index, shake);
+        }
+
+        if (snake.length > 0) {
+          drawSnakeSegment(0, shake);
+        }
+      }
+
+      function drawSnakeSegment(index, shake) {
+        const p = snake[index];
+        const prev = prevSnake[index] || p;
+        const pos = getRenderPosition(p, prev);
+        const x = pos.x + shake.x;
+        const y = pos.y + shake.y;
+        const drawPositions = getWrappedDrawPositions(x, y);
+
+        drawPositions.forEach((drawPos) => {
+          const direction = getDirectionFromTo(prev, p);
           if (index === 0) {
-            drawHead(x, y, getDirectionFromTo(prev, p));
+            drawHead(drawPos.x, drawPos.y, direction);
+            const headWhiteAlpha = getDeathWhitenAlpha(0);
+            if (headWhiteAlpha > 0) {
+              drawDeathWhiteHead(
+                drawPos.x,
+                drawPos.y,
+                size,
+                getAngleByDirection(direction),
+                headWhiteAlpha,
+              );
+            }
           } else {
-            drawBodyPart(p, index, x, y);
+            drawBodyPart(p, index, drawPos.x, drawPos.y);
+            const bodyWhiteAlpha = getDeathWhitenAlpha(index);
+            if (bodyWhiteAlpha > 0) {
+              const skinType = bodySkins[index - 1] || "body";
+              drawWhiteImageOverlay(
+                getBodyImage(skinType),
+                drawPos.x,
+                drawPos.y,
+                size,
+                getAngleByDirection(direction),
+                bodyWhiteAlpha,
+                0,
+              );
+            }
           }
         });
+      }
+
+      function drawBodyConnectors(shake) {
+        if (!bodyConnectorEnabled || snake.length <= 1) return;
+
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        for (let index = snake.length - 1; index >= 1; index--) {
+          const current = snake[index];
+          const previous = snake[index - 1];
+          const currentPrev = prevSnake[index] || current;
+          const previousPrev = prevSnake[index - 1] || previous;
+
+          const currentPos = getRenderPosition(current, currentPrev);
+          const previousPos = getRenderPosition(previous, previousPrev);
+
+          const x1 = currentPos.x + size / 2 + shake.x;
+          const y1 = currentPos.y + size / 2 + shake.y;
+          let x2 = previousPos.x + size / 2 + shake.x;
+          let y2 = previousPos.y + size / 2 + shake.y;
+
+          const adjustedEnd = getShortestCanvasEndPoint(x1, y1, x2, y2);
+          x2 = adjustedEnd.x;
+          y2 = adjustedEnd.y;
+
+          drawConnectorLineWithWrap(x1, y1, x2, y2);
+        }
+
+        ctx.restore();
+      }
+
+      function getShortestCanvasEndPoint(x1, y1, x2, y2) {
+        if (x2 - x1 > canvas.width / 2) x2 -= canvas.width;
+        if (x2 - x1 < -canvas.width / 2) x2 += canvas.width;
+        if (y2 - y1 > canvas.height / 2) y2 -= canvas.height;
+        if (y2 - y1 < -canvas.height / 2) y2 += canvas.height;
+        return { x: x2, y: y2 };
+      }
+
+      function drawConnectorLineWithWrap(x1, y1, x2, y2) {
+        const offsetsX = [0];
+        const offsetsY = [0];
+        const margin = bodyConnectorWidth + size;
+
+        if (Math.min(x1, x2) < margin) offsetsX.push(canvas.width);
+        if (Math.max(x1, x2) > canvas.width - margin) offsetsX.push(-canvas.width);
+        if (Math.min(y1, y2) < margin) offsetsY.push(canvas.height);
+        if (Math.max(y1, y2) > canvas.height - margin) offsetsY.push(-canvas.height);
+
+        offsetsX.forEach((ox) => {
+          offsetsY.forEach((oy) => {
+            ctx.strokeStyle = bodyConnectorColor;
+            ctx.lineWidth = bodyConnectorWidth;
+            ctx.shadowColor = "rgba(0,0,0,0.35)";
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.moveTo(x1 + ox, y1 + oy);
+            ctx.lineTo(x2 + ox, y2 + oy);
+            ctx.stroke();
+
+            ctx.strokeStyle = bodyConnectorHighlight;
+            ctx.lineWidth = bodyConnectorInnerWidth;
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.moveTo(x1 + ox, y1 + oy);
+            ctx.lineTo(x2 + ox, y2 + oy);
+            ctx.stroke();
+          });
+        });
+      }
+
+      function getWrappedDrawPositions(x, y) {
+        const margin = size * 2.2;
+        const xPositions = [x];
+        const yPositions = [y];
+
+        if (x < margin) xPositions.push(x + canvas.width);
+        if (x > canvas.width - margin) xPositions.push(x - canvas.width);
+        if (y < margin) yPositions.push(y + canvas.height);
+        if (y > canvas.height - margin) yPositions.push(y - canvas.height);
+
+        const positions = [];
+        xPositions.forEach((drawX) => {
+          yPositions.forEach((drawY) => {
+            positions.push({ x: drawX, y: drawY });
+          });
+        });
+
+        return positions;
       }
 
       function drawHead(x, y, direction) {
@@ -2441,11 +2991,8 @@
 
         if (gamePaused) {
           moveProgress = moveProgress;
-        } else if (deathPending) {
-          moveProgress = Math.min(
-            ((now - lastMoveTime) / moveDelay) * deathSlowMotionScale,
-            1,
-          );
+        } else if (deathPending || gameOver) {
+          moveProgress = deathFinalMoveProgress;
         } else {
           moveProgress = Math.min((now - lastMoveTime) / moveDelay, 1);
         }
@@ -2492,7 +3039,7 @@
 
         ctx.fillStyle = "rgba(255,184,0,0.12)";
         ctx.beginPath();
-        ctx.arc(canvas.width / 2, canvas.height / 2 - 30, 115, 0, Math.PI * 2);
+        ctx.arc(canvas.width / 2, canvas.height / 2 - 76, 115, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = "white";
@@ -2618,6 +3165,7 @@
         startBtn.disabled = false;
         startBtn.textContent = "开始游戏";
         loadingOverlay.style.display = "none";
+        updateModeStatus(true);
         drawBackground();
       });
     </script>
