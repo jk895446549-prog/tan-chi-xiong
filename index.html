@@ -239,7 +239,8 @@
 
       #pauseBtn,
       #fullscreenBtn,
-      #musicBtn {
+      #musicBtn,
+      #leaderboardBtn {
         padding: 6px 12px;
         border-radius: 10px;
         background: rgba(0, 0, 0, 0.4);
@@ -372,6 +373,217 @@
         pointer-events: none;
       }
 
+
+      #leaderboardBtn {
+        padding: 6px 12px;
+        border-radius: 10px;
+        background: rgba(255, 184, 0, 0.92);
+        color: #2b1b00;
+        font-weight: 900;
+      }
+
+      #leaderboardModal {
+        position: fixed;
+        inset: 0;
+        z-index: 1800;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.72);
+        padding: 18px;
+        box-sizing: border-box;
+      }
+
+      #leaderboardCard {
+        width: min(92vw, 430px);
+        max-height: min(86vh, 680px);
+        display: flex;
+        flex-direction: column;
+        border-radius: 22px;
+        overflow: hidden;
+        background: linear-gradient(180deg, rgba(36, 30, 18, 0.98), rgba(15, 15, 15, 0.98));
+        border: 2px solid rgba(255, 184, 0, 0.56);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+      }
+
+      #leaderboardHeader {
+        padding: 16px 18px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      #leaderboardTitle {
+        font-size: 24px;
+        font-weight: 900;
+        color: #ffcf4a;
+        text-align: left;
+      }
+
+      #leaderboardCloseBtn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+        color: white;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      #playerNameRow {
+        display: flex;
+        gap: 8px;
+        padding: 0 18px 12px;
+      }
+
+      #playerNameInput {
+        flex: 1;
+        min-width: 0;
+        height: 42px;
+        box-sizing: border-box;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 12px;
+        padding: 0 12px;
+        outline: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 16px;
+      }
+
+      #leaderboardOptions {
+        padding: 0 18px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        text-align: left;
+      }
+
+      .leaderboardOption {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.78);
+        line-height: 1.25;
+      }
+
+      .leaderboardOption input {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+        accent-color: #ffb800;
+      }
+
+      #leaderboardList {
+        padding: 0 14px 16px;
+        overflow: auto;
+      }
+
+      .leaderboardItem {
+        display: grid;
+        grid-template-columns: 42px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        margin: 6px 0;
+        padding: 8px 10px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+        box-sizing: border-box;
+      }
+
+      .leaderboardItem.mine {
+        background: rgba(255, 184, 0, 0.22);
+        outline: 1px solid rgba(255, 184, 0, 0.5);
+      }
+
+      .leaderboardRank {
+        font-weight: 900;
+        color: #ffcf4a;
+        font-size: 18px;
+      }
+
+      .leaderboardName {
+        text-align: left;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 800;
+      }
+
+      .leaderboardScore {
+        font-size: 18px;
+        font-weight: 900;
+        color: #ffffff;
+      }
+      .leaderboardMeTag {
+        margin-left: 6px;
+        color: #ffdf6e;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .leaderboardState {
+        min-height: 74px;
+        margin: 6px 0;
+        padding: 18px 12px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.78);
+        background: rgba(255, 255, 255, 0.07);
+        box-sizing: border-box;
+      }
+
+      .leaderboardRetry {
+        color: #ffdf6e;
+        font-weight: 900;
+        text-decoration: underline;
+      }
+
+      .leaderboardRankPulse {
+        animation: leaderboardRankPulse 0.8s ease both;
+      }
+
+      @keyframes leaderboardRankPulse {
+        0% { transform: scale(1); }
+        35% { transform: scale(1.045); box-shadow: 0 0 18px rgba(255, 184, 0, 0.38); }
+        100% { transform: scale(1); }
+      }
+
+
+      #leaderboardActions {
+        display: flex;
+        gap: 8px;
+        padding: 0 18px 18px;
+      }
+
+      #submitScoreBtn {
+        flex: 1;
+        min-height: 46px;
+        border-radius: 14px;
+        color: white;
+        font-weight: 900;
+        font-size: 16px;
+      }
+
+      #submitScoreBtn {
+        background: #ff9800;
+      }
+
+      #leaderboardToast {
+        min-height: 18px;
+        padding: 0 18px 12px;
+        color: #ffdf6e;
+        font-size: 13px;
+      }
+
       @media (max-width: 640px) {
         #gameShell {
           width: min(94vw, 78vh);
@@ -411,9 +623,18 @@
           justify-content: center;
         }
 
+        #leaderboardActions {
+          flex-wrap: wrap;
+        }
+
+        #submitScoreBtn {
+          min-width: 120px;
+        }
+
         #pauseBtn,
         #fullscreenBtn,
-        #musicBtn {
+        #musicBtn,
+        #leaderboardBtn {
           min-width: 54px;
           min-height: 54px;
           padding: 8px 12px;
@@ -514,7 +735,8 @@
 
         #pauseBtn,
         #fullscreenBtn,
-        #musicBtn {
+        #musicBtn,
+        #leaderboardBtn {
           width: 64px;
           min-height: 54px;
           padding: 8px 10px;
@@ -577,6 +799,7 @@
           <button id="pauseBtn" type="button">⏸ 暂停</button>
           <button id="fullscreenBtn" type="button">⛶ 全屏</button>
           <button id="musicBtn" type="button">🔇静音</button>
+          <button id="leaderboardBtn" type="button">🏆 排行榜</button>
         </div>
       </div>
     </div>
@@ -592,10 +815,34 @@
       </div>
     </div>
 
+
+    <div id="leaderboardModal">
+      <div id="leaderboardCard">
+        <div id="leaderboardHeader">
+          <div id="leaderboardTitle">🏆 打工排行榜</div>
+          <button id="leaderboardCloseBtn" type="button">×</button>
+        </div>
+        <div id="playerNameRow">
+          <input id="playerNameInput" maxlength="12" placeholder="输入你的昵称，提交时自动保存" inputmode="text" autocomplete="nickname" />
+        </div>
+        <div id="leaderboardOptions">
+          <label class="leaderboardOption"><input id="autoSubmitBestScoreCheckbox" type="checkbox" checked /> 自动上传最高分</label>
+          <label class="leaderboardOption"><input id="suppressLeaderboardPopupCheckbox" type="checkbox" /> 游戏结束后不再弹出排行榜</label>
+        </div>
+        <div id="leaderboardList"></div>
+        <div id="leaderboardToast"></div>
+        <div id="leaderboardActions">
+          <button id="submitScoreBtn" type="button">提交最高分</button>
+        </div>
+      </div>
+    </div>
+
     <div id="version"></div>
 
+    <script src="config.js"></script>
+    <script src="leaderboard.js"></script>
     <script>
-      const GAME_VERSION = "v1.8.8.5";
+      const GAME_VERSION = (window.CONFIG && CONFIG.VERSION) || "v1.9.1-online-leaderboard";
 
       // ==================== 调试参数 / Game Balance ====================
 
@@ -864,6 +1111,15 @@
       const pauseBtn = document.getElementById("pauseBtn");
       const fullscreenBtn = document.getElementById("fullscreenBtn");
       const musicBtn = document.getElementById("musicBtn");
+      const leaderboardBtn = document.getElementById("leaderboardBtn");
+      const leaderboardModal = document.getElementById("leaderboardModal");
+      const leaderboardCloseBtn = document.getElementById("leaderboardCloseBtn");
+      const leaderboardList = document.getElementById("leaderboardList");
+      const leaderboardToast = document.getElementById("leaderboardToast");
+      const playerNameInput = document.getElementById("playerNameInput");
+      const submitScoreBtn = document.getElementById("submitScoreBtn");
+      const autoSubmitBestScoreCheckbox = document.getElementById("autoSubmitBestScoreCheckbox");
+      const suppressLeaderboardPopupCheckbox = document.getElementById("suppressLeaderboardPopupCheckbox");
       const statusPanel = document.getElementById("statusPanel");
       const teamStatus = document.getElementById("teamStatus");
       const hrStatus = document.getElementById("hrStatus");
@@ -903,33 +1159,46 @@
       const FOOD_DICE = "dice";
 
       // ==================== 资源 ====================
+      const ASSET_IMAGE_PATH = "assets/images/";
+      const ASSET_AUDIO_PATH = "assets/audio/";
+
       const images = {
-        head: loadImage("head.png"),
-        headEat: loadImage("head_eat.png"),
-        body: loadImage("body.png"),
-        bg: loadImage("background.jpg"),
-        bgSpeed: loadImage("background_speed.jpg"),
-        bgBomb: loadImage("background_bomb.jpg"),
-        coffee: loadImage("coffee.png"),
-        hehezi: loadImage("hehezi.png"),
-        xiaobai: loadImage("xiaobai.png"),
-        xiaomao: loadImage("xiaomao.png"),
-        bob: loadImage("bob.png"),
-        layoff: loadImage("layoff.png"),
-        azhu: loadImage("azhu.png"),
-        outsource: loadImage("outsource.png"),
-        ai: loadImage("ai.png"),
-        intern: loadImage("intern.png"),
-        dog: loadImage("dog.png"),
-        pot: loadImage("pot.png"),
-        dice: loadImage("dice.png"),
+        head: loadImage(ASSET_IMAGE_PATH + "head.png"),
+        headEat: loadImage(ASSET_IMAGE_PATH + "head_eat.png"),
+        body: loadImage(ASSET_IMAGE_PATH + "body.png"),
+        bg: loadImage(ASSET_IMAGE_PATH + "background.jpg"),
+        bgSpeed: loadImage(ASSET_IMAGE_PATH + "background_speed.jpg"),
+        bgBomb: loadImage(ASSET_IMAGE_PATH + "background_bomb.jpg"),
+        coffee: loadImage(ASSET_IMAGE_PATH + "coffee.png"),
+        hehezi: loadImage(ASSET_IMAGE_PATH + "hehezi.png"),
+        xiaobai: loadImage(ASSET_IMAGE_PATH + "xiaobai.png"),
+        xiaomao: loadImage(ASSET_IMAGE_PATH + "xiaomao.png"),
+        bob: loadImage(ASSET_IMAGE_PATH + "bob.png"),
+        layoff: loadImage(ASSET_IMAGE_PATH + "layoff.png"),
+        azhu: loadImage(ASSET_IMAGE_PATH + "azhu.png"),
+        outsource: loadImage(ASSET_IMAGE_PATH + "outsource.png"),
+        ai: loadImage(ASSET_IMAGE_PATH + "ai.png"),
+        intern: loadImage(ASSET_IMAGE_PATH + "intern.png"),
+        dog: loadImage(ASSET_IMAGE_PATH + "dog.png"),
+        pot: loadImage(ASSET_IMAGE_PATH + "pot.png"),
+        dice: loadImage(ASSET_IMAGE_PATH + "dice.png"),
       };
 
-      const eatSound = new Audio("eat.mp3");
-      const gameOverSound = new Audio("gameover.mp3");
-      const bgm = new Audio("bgm.mp3");
-      bgm.loop = true;
-      bgm.volume = 0.4;
+      const sounds = {
+        bgm: loadAudio("bgm.mp3", { loop: true, volume: 0.4 }),
+        eat: loadAudio("eat.mp3"),
+        bad: loadAudio("bad.mp3"),
+        coffee: loadAudio("coffee.mp3"),
+        levelup: loadAudio("levelup.mp3"),
+        team: loadAudio("team.mp3"),
+        layoff: loadAudio("layoff.mp3"),
+        shieldOn: loadAudio("shield_on.mp3"),
+        shieldBreak: loadAudio("shield_break.mp3"),
+        death: loadAudio("death.mp3"),
+        bossDeath: loadAudio("boss_death.mp3"),
+        start: loadAudio("start.mp3"),
+      };
+      const bgm = sounds.bgm;
 
       // ==================== 状态 ====================
       let snake = [];
@@ -938,6 +1207,7 @@
       let foods = [];
       let score = 0;
       let bestScore = Number(localStorage.getItem("bestScore") || 0);
+
 
       let dir = { x: 1, y: 0 };
       let nextDir = { x: 1, y: 0 };
@@ -987,8 +1257,24 @@
       // ==================== 初始化 ====================
       function loadImage(src) {
         const img = new Image();
+        img.__assetSrc = src;
+        img.__ok = false;
         img.src = src;
         return img;
+      }
+
+      function loadAudio(fileName, options = {}) {
+        const audio = new Audio(ASSET_AUDIO_PATH + fileName);
+        audio.__assetSrc = ASSET_AUDIO_PATH + fileName;
+        audio.__ok = true;
+        audio.preload = "auto";
+        audio.loop = Boolean(options.loop);
+        if (typeof options.volume === "number") audio.volume = options.volume;
+        audio.addEventListener("error", () => {
+          audio.__ok = false;
+          console.warn("音效加载失败:", audio.__assetSrc);
+        });
+        return audio;
       }
 
       function reset() {
@@ -1007,6 +1293,7 @@
         lastMoveTime = performance.now();
 
         score = 0;
+        hasSubmittedThisGame = false;
         gameOver = false;
         gamePaused = false;
         pauseStartTime = 0;
@@ -1047,10 +1334,10 @@
         startHint.style.display = "none";
         document.body.classList.add("gameActive");
         gameStarted = true;
+        playSound(sounds.start);
         requestFullscreenIfPossible();
         setTimeout(requestFullscreenIfPossible, 80);
-        await requestFullscreenIfPossible();
-        bgm.play().catch(() => {});
+        if (bgm) if (bgm) bgm.play().catch(() => {});
         reset();
       }
 
@@ -1061,10 +1348,10 @@
       function toggleMusic() {
         musicEnabled = !musicEnabled;
         if (musicEnabled) {
-          bgm.play().catch(() => {});
+          if (bgm) bgm.play().catch(() => {});
           musicBtn.textContent = "🔊音乐";
         } else {
-          bgm.pause();
+          if (bgm) bgm.pause();
           musicBtn.textContent = "🔇静音";
         }
       }
@@ -1076,10 +1363,10 @@
 
         if (gamePaused) {
           pauseStartTime = Date.now();
-          bgm.pause();
+          if (bgm) bgm.pause();
         } else {
           lastMoveTime = performance.now();
-          if (musicEnabled) bgm.play().catch(() => {});
+          if (musicEnabled) if (bgm) bgm.play().catch(() => {});
         }
 
         updatePauseButton();
@@ -1151,6 +1438,29 @@
       bindTap(pauseBtn, togglePause);
       bindTap(fullscreenBtn, toggleFullscreen);
       bindTap(musicBtn, toggleMusic);
+      window.GreedyLeaderboard.init({
+        elements: {
+          leaderboardBtn,
+          leaderboardModal,
+          leaderboardCloseBtn,
+          leaderboardList,
+          leaderboardToast,
+          playerNameInput,
+          submitScoreBtn,
+          autoSubmitBestScoreCheckbox,
+          suppressLeaderboardPopupCheckbox,
+        },
+        api: {
+          getCurrentScore: () => score,
+          getBestScore: () => bestScore,
+          isGameStarted: () => gameStarted,
+          isGameOver: () => gameOver,
+          isDeathPending: () => deathPending,
+          isGamePaused: () => gamePaused,
+          togglePause,
+          restartGame,
+        },
+      });
 
       if (!document.fullscreenEnabled) {
         fullscreenBtn.style.display = "none";
@@ -1160,6 +1470,7 @@
       updatePauseButton();
 
       document.addEventListener("keydown", (e) => {
+        if (isTypingTarget(e.target)) return;
         if (e.key === "ArrowUp") setNextDirection(0, -1);
         if (e.key === "ArrowDown") setNextDirection(0, 1);
         if (e.key === "ArrowLeft") setNextDirection(-1, 0);
@@ -1218,8 +1529,15 @@
         { passive: false },
       );
 
+      function isTypingTarget(target) {
+        return Boolean(target && target.closest && target.closest("input, textarea, select"));
+      }
+
       function isButtonTouch(e) {
-        return Boolean(e.target.closest && e.target.closest("button"));
+        return Boolean(
+          e.target.closest &&
+            e.target.closest("button, input, textarea, select, label, #leaderboardModal"),
+        );
       }
 
       function setNextDirection(x, y) {
@@ -1675,10 +1993,13 @@
 
       function startSpeedMode() {
         const now = getGameTime();
+        const previousLevel = speedLevel;
+        let didLevelUp = false;
 
         // 咖啡机制：先续杯3秒；只有续杯后超过当前阶段最大持续时间，才升档。
         if (speedLevel <= 0 || !isSpeedMode()) {
           speedLevel = 1;
+          didLevelUp = speedLevel > previousLevel;
           speedModeEndTime = now + getSpeedLevelDuration(speedLevel);
         } else {
           const currentLevelDuration = getSpeedLevelDuration(speedLevel);
@@ -1690,6 +2011,7 @@
             speedLevel < maxSpeedLevel
           ) {
             speedLevel += 1;
+            didLevelUp = speedLevel > previousLevel;
             speedModeEndTime = now + getSpeedLevelDuration(speedLevel);
           } else {
             speedModeEndTime =
@@ -1700,6 +2022,7 @@
         updateSpeedModeDelay();
         updateModeStatus(true);
         fillFoods();
+        return didLevelUp;
       }
 
       function getSpeedLevelDuration(level) {
@@ -1781,6 +2104,8 @@
           snake.pop();
 
           if (isShieldMode()) {
+            playSound(sounds.shieldBreak);
+            shieldModeEndTime = 0;
             foods = foods.filter((f) => f !== eatenFood);
             addScorePopup(
               head.x * size,
@@ -1836,11 +2161,12 @@
       function handleEatenFood(food, head, fromTeamAbsorb = false) {
         foods = foods.filter((f) => f !== food);
         eatingStartTime = getGameTime();
-        playSound(eatSound);
 
         // 物品：只负责进入状态，不加分、不加身体。
         if (food.type === FOOD_SPEED) {
-          startSpeedMode();
+          const didLevelUp = startSpeedMode();
+          playSound(sounds.coffee);
+          if (didLevelUp) playSound(sounds.levelup);
           addScorePopup(
             head.x * size,
             head.y * size,
@@ -1854,6 +2180,7 @@
         }
 
         if (food.type === FOOD_HR) {
+          playSound(sounds.layoff);
           startHrMode();
           shrinkAfterEating(hrShrinkOnEat);
           addScorePopup(
@@ -1869,6 +2196,7 @@
         }
 
         if (food.type === FOOD_POT) {
+          playSound(sounds.shieldOn);
           startShieldMode();
           addScorePopup(
             head.x * size,
@@ -1883,6 +2211,7 @@
         }
 
         if (food.type === FOOD_DICE) {
+          playSound(sounds.team);
           startTeamMode();
           addScorePopup(
             head.x * size,
@@ -1917,6 +2246,7 @@
         if (food.type === FOOD_NORMAL) {
           const point = normalFoodScore * multiplier;
           addScore(point);
+          playSound(sounds.eat);
           addScorePopup(
             head.x * size,
             head.y * size,
@@ -1931,6 +2261,7 @@
         if (food.type === FOOD_TRIPLE) {
           const point = heheziScore * multiplier;
           addScore(point);
+          playSound(sounds.eat);
           addScorePopup(
             head.x * size,
             head.y * size,
@@ -1945,6 +2276,7 @@
         if (food.type === FOOD_AZHU) {
           const point = azhuScore * multiplier;
           addScore(point);
+          playSound(sounds.eat);
           addScorePopup(
             head.x * size,
             head.y * size,
@@ -1966,6 +2298,7 @@
         if (food.type === FOOD_AI) {
           const point = aiScore * multiplier;
           addScore(point);
+          playSound(sounds.eat);
           addScorePopup(
             head.x * size,
             head.y * size,
@@ -1981,6 +2314,7 @@
             Math.random() < 0.5 ? internGoodScore : internBadScore;
           const point = basePoint * multiplier;
           addScore(point);
+          playSound(point >= 0 ? sounds.eat : sounds.bad);
           addScorePopup(
             head.x * size,
             head.y * size,
@@ -1995,6 +2329,7 @@
         if (food.type === FOOD_DOG) {
           const point = dogScore * multiplier;
           addScore(point);
+          playSound(sounds.bad);
           addScorePopup(
             head.x * size,
             head.y * size,
@@ -2024,7 +2359,9 @@
         deathFrozenBackground = getCurrentBackgroundImage(); // 普通死亡锁定当时背景，避免之后二次变暗/变色
         deathRestartDelay = Math.max(
           deathFreezeTime,
-          deathBodyWhitenStart + Math.max(0, snake.length - 1) * deathBodyWhitenStep + 260,
+          deathBodyWhitenStart +
+            Math.max(0, snake.length - 1) * deathBodyWhitenStep +
+            260,
         );
         moveProgress = deathFinalMoveProgress;
         bombGameOver = false;
@@ -2032,7 +2369,7 @@
         restartBtn.style.opacity = "0";
         updateModeStatus(true); // 死亡瞬间立刻刷新到撞击时刻
         statusUiFrozen = true; // 之后不再刷新状态栏，避免按钮出现后跳到另一个阶段
-        playSound(gameOverSound);
+        playSound(isBomb ? sounds.bossDeath : sounds.death);
       }
 
       function finishDeath() {
@@ -2050,6 +2387,7 @@
         requestAnimationFrame(() => {
           restartBtn.style.opacity = "1";
         });
+        window.GreedyLeaderboard.handleGameOver();
       }
 
       function gameOverNow(isBomb = false) {
@@ -2058,6 +2396,41 @@
       }
 
       // ==================== 绘制 ====================
+
+      function safeDrawImage(img, ...args) {
+        if (img && img.complete && img.naturalWidth > 0) {
+          try {
+            ctx.drawImage(img, ...args);
+            return true;
+          } catch (e) {
+            console.warn("图片绘制失败:", img.__assetSrc || img.src || img, e);
+          }
+        }
+
+        // 图片缺失时使用占位图形，确保游戏不会崩溃。
+        const x = args.length >= 4 ? args[0] : 0;
+        const y = args.length >= 4 ? args[1] : 0;
+        const w = args.length >= 4 ? args[2] : canvas.width;
+        const h = args.length >= 4 ? args[3] : canvas.height;
+
+        ctx.save();
+        ctx.fillStyle = "rgba(90, 90, 90, 0.55)";
+        ctx.beginPath();
+        ctx.arc(
+          x + w / 2,
+          y + h / 2,
+          Math.max(6, Math.min(w, h) / 2),
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.35)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+        return false;
+      }
+
       function drawGame() {
         drawBackground();
 
@@ -2114,7 +2487,7 @@
           deathFrozenBackground && (deathPending || (gameOver && !bombGameOver))
             ? deathFrozenBackground
             : getCurrentBackgroundImage();
-        ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+        safeDrawImage(bg, 0, 0, canvas.width, canvas.height);
         ctx.fillStyle = `rgba(0,0,0,${bgMask})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
@@ -2180,7 +2553,7 @@
         }
         // Canvas filter 保留图片 alpha，只把不透明头像区域变白。
         ctx.filter = "brightness(0) invert(1)";
-        ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+        safeDrawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
         ctx.restore();
       }
 
@@ -2693,9 +3066,11 @@
         const margin = bodyConnectorWidth + size;
 
         if (Math.min(x1, x2) < margin) offsetsX.push(canvas.width);
-        if (Math.max(x1, x2) > canvas.width - margin) offsetsX.push(-canvas.width);
+        if (Math.max(x1, x2) > canvas.width - margin)
+          offsetsX.push(-canvas.width);
         if (Math.min(y1, y2) < margin) offsetsY.push(canvas.height);
-        if (Math.max(y1, y2) > canvas.height - margin) offsetsY.push(-canvas.height);
+        if (Math.max(y1, y2) > canvas.height - margin)
+          offsetsY.push(-canvas.height);
 
         offsetsX.forEach((ox) => {
           offsetsY.forEach((oy) => {
@@ -2798,7 +3173,7 @@
           Math.PI * 2,
         );
         ctx.clip();
-        ctx.drawImage(img, x, y, drawSize, drawSize);
+        safeDrawImage(img, x, y, drawSize, drawSize);
         ctx.restore();
       }
 
@@ -2831,7 +3206,7 @@
         ctx.beginPath();
         ctx.arc(0, 0, drawSize / 2, 0, Math.PI * 2);
         ctx.clip();
-        ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+        safeDrawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
         ctx.restore();
       }
 
@@ -2888,6 +3263,9 @@
           maxLife: popupLife,
         });
       }
+
+
+      // ==================== 联网排行榜：已拆分到 leaderboard.js ====================
 
       // ==================== 工具函数 ====================
       function copyPoint(p) {
@@ -2969,9 +3347,13 @@
       }
 
       function playSound(sound) {
-        if (!musicEnabled) return;
-        sound.currentTime = 0;
-        sound.play().catch(() => {});
+        if (!musicEnabled || !sound || sound.__ok === false) return;
+        try {
+          sound.currentTime = 0;
+          sound.play().catch(() => {});
+        } catch (e) {
+          console.warn("音效播放失败:", sound.__assetSrc || sound, e);
+        }
       }
 
       // ==================== 动画循环 ====================
@@ -3131,6 +3513,7 @@
 
                 function finish(success) {
                   loaded += 1;
+                  img.__ok = success;
                   assetStates[name] = success ? "done" : "failed";
                   const progress = Math.round((loaded / total) * 100);
                   updateLoadingUI(progress, name);
@@ -3152,7 +3535,65 @@
         );
       }
 
-      preloadImages().then(async () => {
+      function preloadAudios() {
+        const audioList = Object.entries(sounds).filter(([, audio]) => audio);
+        if (audioList.length === 0) return Promise.resolve();
+
+        return Promise.all(
+          audioList.map(
+            ([name, audio]) =>
+              new Promise((resolve) => {
+                let done = false;
+
+                function finish(success) {
+                  if (done) return;
+                  done = true;
+                  audio.__ok = success;
+                  if (!success)
+                    console.warn(`音效加载失败: ${name}`, audio.__assetSrc);
+                  resolve();
+                }
+
+                if (!audio) {
+                  finish(false);
+                  return;
+                }
+
+                if (audio.readyState >= 2) {
+                  finish(true);
+                  return;
+                }
+
+                audio.addEventListener("canplaythrough", () => finish(true), {
+                  once: true,
+                });
+                audio.addEventListener("loadeddata", () => finish(true), {
+                  once: true,
+                });
+                audio.addEventListener("error", () => finish(false), {
+                  once: true,
+                });
+
+                // 音频缺失或浏览器不预加载时，不阻塞游戏开始。
+                setTimeout(() => finish(audio.__ok !== false), 1200);
+                try {
+                  audio.load();
+                } catch (e) {
+                  finish(false);
+                }
+              }),
+          ),
+        ).then(() => {
+          const okCount = audioList.filter(
+            ([, a]) => a && a.__ok !== false,
+          ).length;
+          console.log(
+            `音效资源: ${okCount}/${audioList.length}，即使缺失也会继续运行`,
+          );
+        });
+      }
+
+      Promise.all([preloadImages(), preloadAudios()]).then(async () => {
         updateLoadingUI(100);
 
         if (DEBUG_LOADING) {
