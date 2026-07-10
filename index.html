@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>打工人生存法则——贪吃经理</title>
     <style>
@@ -13,21 +13,32 @@
         margin: 0;
         padding: 0;
         width: 100%;
-        min-height: 100vh;
-        min-height: 100svh;
+        height: 100%;
+        min-height: 100%;
         background: #222;
         color: white;
         text-align: center;
         font-family: sans-serif;
         overflow: hidden;
-        touch-action: none;
+        touch-action: manipulation;
         user-select: none;
       }
 
       body {
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-right: env(safe-area-inset-right, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left: env(safe-area-inset-left, 0px);
+        --ad-safe-bottom: 0px;
         display: flex;
         align-items: center;
         justify-content: center;
+        box-sizing: border-box;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: max(8px, var(--safe-top)) max(8px, var(--safe-right))
+          max(8px, calc(var(--safe-bottom) + var(--ad-safe-bottom)))
+          max(8px, var(--safe-left));
       }
 
       body.gameActive {
@@ -42,7 +53,9 @@
 
       #gameShell {
         width: min(92vw, 78vh, 600px);
-        max-height: 100svh;
+        width: min(92vw, 78dvh, 600px);
+        max-width: 100%;
+        max-height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -97,8 +110,41 @@
       }
 
       #scorePanel {
-        font-size: 24px;
-        font-weight: bold;
+        width: 100%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: center;
+        gap: 12px;
+      }
+
+      .scoreStat {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        font-weight: 900;
+      }
+
+      .scoreStat:first-child {
+        text-align: left;
+      }
+
+      .scoreStat:last-child {
+        text-align: right;
+      }
+
+      .scoreLabel {
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 12px;
+        line-height: 1.1;
+        white-space: nowrap;
+      }
+
+      .scoreValue {
+        font-size: 25px;
+        line-height: 1.05;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       #startHint {
@@ -150,32 +196,19 @@
         box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45);
       }
 
+      .buffStatus.inPool {
+        color: white;
+        border-color: rgba(255, 255, 255, 0.48);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
       .buffStatus.active {
         color: white;
-      }
-
-      #teamStatus.active {
-        border-color: rgba(77, 208, 225, 0.92);
-        background: rgba(77, 208, 225, 0.26);
+        border-color: rgba(79, 195, 247, 0.98);
+        background: rgba(33, 150, 243, 0.24);
         box-shadow:
-          0 0 10px rgba(77, 208, 225, 0.45),
-          inset 0 0 12px rgba(77, 208, 225, 0.2);
-      }
-
-      #hrStatus.active {
-        border-color: rgba(179, 136, 255, 0.95);
-        background: rgba(179, 136, 255, 0.25);
-        box-shadow:
-          0 0 10px rgba(179, 136, 255, 0.42),
-          inset 0 0 12px rgba(179, 136, 255, 0.18);
-      }
-
-      #shieldStatus.active {
-        border-color: rgba(52, 226, 122, 0.95);
-        background: rgba(52, 226, 122, 0.24);
-        box-shadow:
-          0 0 10px rgba(52, 226, 122, 0.45),
-          inset 0 0 12px rgba(52, 226, 122, 0.18);
+          0 0 11px rgba(79, 195, 247, 0.62),
+          inset 0 0 12px rgba(79, 195, 247, 0.2);
       }
 
       #overtimeBar {
@@ -248,7 +281,7 @@
       }
 
       #startBtn,
-      #restartBtn {
+      #retryBtn {
         position: absolute;
         left: 50%;
         top: 50%;
@@ -272,11 +305,25 @@
         opacity: 0.85;
       }
 
-      #restartBtn {
+      #retryBtn {
         display: none;
         background: #ffb800;
-        opacity: 0;
-        transition: opacity 0.45s ease;
+        color: #2b1b00;
+      }
+
+      #restartBtn {
+        min-width: 78px;
+        padding: 9px 18px;
+        background: #ffb800;
+        color: #2b1b00;
+        font-size: 16px;
+        border-radius: 11px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.28);
+      }
+
+      #restartBtn:disabled {
+        cursor: default;
+        opacity: 0.42;
       }
 
       #loadingOverlay {
@@ -373,7 +420,6 @@
         pointer-events: none;
       }
 
-
       #leaderboardBtn {
         padding: 6px 12px;
         border-radius: 10px;
@@ -390,8 +436,11 @@
         align-items: center;
         justify-content: center;
         background: rgba(0, 0, 0, 0.72);
-        padding: 18px;
+        padding: max(18px, var(--safe-top)) max(18px, var(--safe-right))
+          max(18px, var(--safe-bottom)) max(18px, var(--safe-left));
         box-sizing: border-box;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
       }
 
       #leaderboardCard {
@@ -401,9 +450,15 @@
         flex-direction: column;
         border-radius: 22px;
         overflow: hidden;
-        background: linear-gradient(180deg, rgba(36, 30, 18, 0.98), rgba(15, 15, 15, 0.98));
+        background: linear-gradient(
+          180deg,
+          rgba(36, 30, 18, 0.98),
+          rgba(15, 15, 15, 0.98)
+        );
         border: 2px solid rgba(255, 184, 0, 0.56);
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+        min-height: 0;
+        touch-action: pan-y;
       }
 
       #leaderboardHeader {
@@ -476,8 +531,15 @@
       }
 
       #leaderboardList {
+        flex: 1 1 auto;
+        min-height: 88px;
         padding: 0 14px 16px;
-        overflow: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-gutter: stable;
       }
 
       .leaderboardItem {
@@ -551,12 +613,125 @@
         animation: leaderboardRankPulse 0.8s ease both;
       }
 
-      @keyframes leaderboardRankPulse {
-        0% { transform: scale(1); }
-        35% { transform: scale(1.045); box-shadow: 0 0 18px rgba(255, 184, 0, 0.38); }
-        100% { transform: scale(1); }
+      .leaderboardRankRise {
+        position: relative;
+        z-index: 2;
+        animation: leaderboardRankRise 1s cubic-bezier(0.2, 0.9, 0.25, 1) both;
       }
 
+      @keyframes leaderboardRankPulse {
+        0% {
+          transform: scale(1);
+        }
+        35% {
+          transform: scale(1.045);
+          box-shadow: 0 0 18px rgba(255, 184, 0, 0.38);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes leaderboardRankRise {
+        0% {
+          transform: translateY(var(--rank-shift, 96px)) scale(0.96);
+          filter: brightness(1.55);
+          box-shadow: 0 0 0 rgba(79, 195, 247, 0);
+        }
+        58% {
+          transform: translateY(-7px) scale(1.045);
+          filter: brightness(1.2);
+          box-shadow: 0 0 24px rgba(79, 195, 247, 0.68);
+        }
+        100% {
+          transform: translateY(0) scale(1);
+          filter: brightness(1);
+          box-shadow: 0 0 14px rgba(79, 195, 247, 0.35);
+        }
+      }
+
+      #leaderboardCard.recordSequence #leaderboardCloseBtn,
+      #leaderboardCard.recordSequence #submitScoreBtn,
+      #leaderboardCard.recordSequence #playerNameRow,
+      #leaderboardCard.recordSequence #leaderboardOptions {
+        pointer-events: none;
+        opacity: 0.52;
+      }
+
+      #newRecordOverlay,
+      #portraitNotice {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+      }
+
+      #newRecordOverlay {
+        z-index: 1900;
+        padding: 24px;
+        background: rgba(0, 0, 0, 0.78);
+        pointer-events: auto;
+      }
+
+      #newRecordCard {
+        width: min(84vw, 380px);
+        padding: 28px 22px;
+        border: 2px solid rgba(255, 207, 74, 0.86);
+        border-radius: 24px;
+        background: radial-gradient(
+          circle at top,
+          rgba(255, 184, 0, 0.28),
+          rgba(20, 20, 20, 0.98) 68%
+        );
+        box-shadow: 0 0 42px rgba(255, 184, 0, 0.35);
+        animation: newRecordPop 0.72s cubic-bezier(0.2, 1.2, 0.3, 1) both;
+      }
+
+      #newRecordTitle {
+        color: #ffdf6e;
+        font-size: clamp(30px, 9vw, 46px);
+        font-weight: 1000;
+        text-shadow: 0 4px 18px rgba(255, 184, 0, 0.42);
+      }
+
+      #newRecordScore {
+        margin-top: 16px;
+        color: white;
+        font-size: clamp(25px, 8vw, 38px);
+        font-weight: 900;
+      }
+
+      #newRecordScore span {
+        margin: 0 10px;
+        color: #4fc3f7;
+      }
+
+      @keyframes newRecordPop {
+        from {
+          opacity: 0;
+          transform: translateY(24px) scale(0.82);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      #portraitNotice {
+        z-index: 3000;
+        padding: max(24px, var(--safe-top)) max(24px, var(--safe-right))
+          max(24px, var(--safe-bottom)) max(24px, var(--safe-left));
+        background: #171717;
+        pointer-events: auto;
+      }
+
+      #portraitNoticeCard {
+        font-size: clamp(22px, 6vw, 34px);
+        font-weight: 900;
+        line-height: 1.5;
+      }
 
       #leaderboardActions {
         display: flex;
@@ -586,7 +761,7 @@
 
       @media (max-width: 640px) {
         #gameShell {
-          width: min(94vw, 78vh);
+          width: min(94vw, calc(100dvh - 205px), 600px);
         }
 
         #topBar {
@@ -595,7 +770,21 @@
         }
 
         #scorePanel {
-          font-size: clamp(18px, 6vw, 30px);
+          gap: 7px;
+        }
+
+        .scoreValue {
+          font-size: clamp(20px, 6vw, 28px);
+        }
+
+        .scoreLabel {
+          font-size: 11px;
+        }
+
+        #restartBtn {
+          min-width: 68px;
+          padding: 8px 13px;
+          font-size: 15px;
         }
 
         #statusPanel {
@@ -649,119 +838,30 @@
         }
       }
 
-      @media (orientation: landscape) and (max-height: 640px) {
-        body {
-          align-items: center;
-          justify-content: center;
-        }
-
+      @media (max-width: 380px),
+        (max-height: 680px) and (orientation: portrait) {
         #gameShell {
-          width: 100vw;
-          height: 100svh;
-          max-height: none;
-          box-sizing: border-box;
-          padding: 8px 10px;
-          display: grid;
-          grid-template-columns: min(72vw, calc(100svh - 76px)) auto;
-          grid-template-rows: auto auto min(72vw, calc(100svh - 106px));
-          grid-template-areas:
-            "top controls"
-            "status controls"
-            "game controls";
-          justify-content: center;
-          align-content: center;
-          align-items: center;
-          column-gap: 10px;
-          row-gap: 6px;
+          width: min(94vw, calc(100dvh - 178px));
         }
 
-        #topBar {
-          grid-area: top;
-          width: 100%;
-          margin: 0;
-          gap: 16px;
-        }
-
-        #scorePanel {
-          font-size: clamp(18px, 5vh, 28px);
-          line-height: 1;
-          white-space: nowrap;
-        }
-
+        #topBar,
         #statusPanel {
-          grid-area: status;
-          width: 100%;
-          margin: 0;
-          gap: 3px;
-        }
-
-        #gameArea {
-          grid-area: game;
-          width: min(72vw, calc(100svh - 106px));
-          height: min(72vw, calc(100svh - 106px));
+          margin-bottom: 4px;
         }
 
         #bottomBar {
-          grid-area: controls;
-          width: auto;
-          margin: 0;
-          align-self: center;
-          justify-self: center;
-          flex-direction: column;
-        }
-
-        .buffStatus {
-          height: 21px;
-          font-size: 10px;
-          line-height: 19px;
-        }
-
-        #overtimeBar {
-          height: 25px;
-        }
-
-        #overtimeText {
-          font-size: 11px;
-          line-height: 25px;
-          padding: 0 6px;
-        }
-
-        #controlButtons {
-          width: auto;
-          flex-direction: column;
-          justify-content: center;
-          gap: 8px;
+          margin-top: 5px;
+          margin-bottom: 2px;
         }
 
         #pauseBtn,
         #fullscreenBtn,
         #musicBtn,
         #leaderboardBtn {
-          width: 64px;
-          min-height: 54px;
-          padding: 8px 10px;
-          font-size: 15px;
-          line-height: 1.25;
-          border-radius: 14px;
-          white-space: normal;
-        }
-
-        #startBtn,
-        #restartBtn {
-          padding: 12px 26px;
-          font-size: 18px;
-        }
-
-        #startHint {
-          top: calc(50% + 50px);
+          min-width: 48px;
+          min-height: 46px;
+          padding: 6px 8px;
           font-size: 13px;
-          line-height: 1.45;
-        }
-
-        #version {
-          right: 8px;
-          bottom: 6px;
-          font-size: 11px;
         }
       }
     </style>
@@ -771,7 +871,15 @@
     <div id="gameShell">
       <div id="topBar">
         <div id="scorePanel">
-          分数：<span id="score">0</span> 最高分：<span id="bestScore">0</span>
+          <div class="scoreStat">
+            <span class="scoreLabel">当前局分数</span>
+            <strong id="score" class="scoreValue">0</strong>
+          </div>
+          <button id="restartBtn" type="button" disabled>重开一局</button>
+          <div class="scoreStat">
+            <span class="scoreLabel">最高分</span>
+            <strong id="bestScore" class="scoreValue">0</strong>
+          </div>
         </div>
       </div>
 
@@ -790,8 +898,8 @@
       <div id="gameArea">
         <canvas id="game" width="384" height="384"></canvas>
         <button id="startBtn" type="button">开始游戏</button>
-        <button id="restartBtn" type="button">重新开始</button>
-        <div id="startHint">方向键 / 滑动屏幕控制，P暂停，空格重开</div>
+        <button id="retryBtn" type="button">重新开始</button>
+        <div id="startHint">方向键 / 滑动屏幕控制，P 暂停，R 重开一局</div>
       </div>
 
       <div id="bottomBar">
@@ -802,6 +910,20 @@
           <button id="leaderboardBtn" type="button">🏆 排行榜</button>
         </div>
       </div>
+    </div>
+
+    <div id="newRecordOverlay" aria-live="assertive" aria-hidden="true">
+      <div id="newRecordCard">
+        <div id="newRecordTitle">🎉 新纪录！</div>
+        <div id="newRecordScore">
+          <b id="newRecordOldScore">0</b><span>→</span
+          ><b id="newRecordBestScore">0</b>
+        </div>
+      </div>
+    </div>
+
+    <div id="portraitNotice" aria-live="polite" aria-hidden="true">
+      <div id="portraitNoticeCard">📱<br />请竖屏体验</div>
     </div>
 
     <div id="loadingOverlay">
@@ -815,19 +937,35 @@
       </div>
     </div>
 
-
     <div id="leaderboardModal">
-      <div id="leaderboardCard">
+      <div
+        id="leaderboardCard"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="leaderboardTitle"
+      >
         <div id="leaderboardHeader">
           <div id="leaderboardTitle">🏆 打工排行榜</div>
           <button id="leaderboardCloseBtn" type="button">×</button>
         </div>
         <div id="playerNameRow">
-          <input id="playerNameInput" maxlength="12" placeholder="输入你的昵称，提交时自动保存" inputmode="text" autocomplete="nickname" />
+          <input
+            id="playerNameInput"
+            maxlength="12"
+            placeholder="输入你的昵称，提交时自动保存"
+            inputmode="text"
+            autocomplete="nickname"
+          />
         </div>
         <div id="leaderboardOptions">
-          <label class="leaderboardOption"><input id="autoSubmitBestScoreCheckbox" type="checkbox" checked /> 自动上传最高分</label>
-          <label class="leaderboardOption"><input id="suppressLeaderboardPopupCheckbox" type="checkbox" /> 游戏结束后不再弹出排行榜</label>
+          <label class="leaderboardOption"
+            ><input id="autoSubmitBestScoreCheckbox" type="checkbox" checked />
+            自动上传最高分</label
+          >
+          <label class="leaderboardOption"
+            ><input id="suppressLeaderboardPopupCheckbox" type="checkbox" />
+            游戏结束后不再弹出排行榜</label
+          >
         </div>
         <div id="leaderboardList"></div>
         <div id="leaderboardToast"></div>
@@ -842,7 +980,7 @@
     <script src="config.js"></script>
     <script src="leaderboard.js"></script>
     <script>
-      const GAME_VERSION = (window.CONFIG && CONFIG.VERSION) || "v1.9.1-online-leaderboard";
+      const GAME_VERSION = (window.CONFIG && CONFIG.VERSION) || "v1.9.4";
 
       // ==================== 调试参数 / Game Balance ====================
 
@@ -857,7 +995,7 @@
       const speed = 200; // 普通速度，越小越快
       const maxSpeedLevel = 5; // 加班阶段：0正常，1提提神，2轻度加班，3中度加班，4疯狂加班，5通宵爆肝，5通宵爆肝
       const speedLevelDurations = [0, 7000, 7000, 9000, 7000, 5000]; // 第0项不用，提提神7秒，轻度7秒，中度9秒，疯狂7秒，通宵5秒
-      const coffeeExtendTime = 3000; // 吃咖啡先续杯3秒；续杯后超过当前阶段最大时长才升档
+      const coffeeExtendTime = 4000; // 吃咖啡先续杯3秒；续杯后超过当前阶段最大时长才升档
       const speedLevelDelays = [240, 200, 190, 175, 150, 125]; // 每阶段速度
       const scoreMultipliers = [1, 1, 2, 2, 3, 4]; // 工资倍率：正常x1，提提神x1，轻度x2，中度x2，疯狂x3，通宵x4
       const speedInfoFontSize = 12; // 状态栏字体大小
@@ -869,7 +1007,7 @@
       const hrInfoColor = "#B388FF"; // 裁员提示颜色
 
       // 背锅侠模式
-      const shieldModeDuration = 3000; // 背锅侠模式持续时间(ms)
+      const shieldModeDuration = 5000; // 背锅侠模式持续时间(ms)
       const shieldInfoColor = "#34E27A"; // 背锅侠护盾颜色
       const shieldWarningTime = 1000; // 背锅侠剩余多少毫秒开始闪烁
       const shieldRingRadius = 24; // 背锅侠护盾基础半径(px)
@@ -1081,7 +1219,7 @@
       const popupLabelAI = "AI替代";
       const popupLabelInternGood = "天才实习生";
       const popupLabelInternBad = "混个学分";
-      const popupLabelDog = "卖狗粮";
+      const popupLabelDog = "买狗粮";
       const popupLabelCoffee = "鹿鹿咖啡";
       const popupLabelLayoff = "裁员通知";
       const popupLabelPot = "今天我背锅";
@@ -1108,18 +1246,26 @@
       const topBar = document.getElementById("topBar");
       const restartBtn = document.getElementById("restartBtn");
       const startBtn = document.getElementById("startBtn");
+      const retryBtn = document.getElementById("retryBtn");
       const pauseBtn = document.getElementById("pauseBtn");
       const fullscreenBtn = document.getElementById("fullscreenBtn");
       const musicBtn = document.getElementById("musicBtn");
       const leaderboardBtn = document.getElementById("leaderboardBtn");
       const leaderboardModal = document.getElementById("leaderboardModal");
-      const leaderboardCloseBtn = document.getElementById("leaderboardCloseBtn");
+      const leaderboardCard = document.getElementById("leaderboardCard");
+      const leaderboardCloseBtn = document.getElementById(
+        "leaderboardCloseBtn",
+      );
       const leaderboardList = document.getElementById("leaderboardList");
       const leaderboardToast = document.getElementById("leaderboardToast");
       const playerNameInput = document.getElementById("playerNameInput");
       const submitScoreBtn = document.getElementById("submitScoreBtn");
-      const autoSubmitBestScoreCheckbox = document.getElementById("autoSubmitBestScoreCheckbox");
-      const suppressLeaderboardPopupCheckbox = document.getElementById("suppressLeaderboardPopupCheckbox");
+      const autoSubmitBestScoreCheckbox = document.getElementById(
+        "autoSubmitBestScoreCheckbox",
+      );
+      const suppressLeaderboardPopupCheckbox = document.getElementById(
+        "suppressLeaderboardPopupCheckbox",
+      );
       const statusPanel = document.getElementById("statusPanel");
       const teamStatus = document.getElementById("teamStatus");
       const hrStatus = document.getElementById("hrStatus");
@@ -1139,6 +1285,10 @@
       const loadingPercent = document.getElementById("loadingPercent");
       const loadingAssetList = document.getElementById("loadingAssetList");
       const loadingDevTip = document.getElementById("loadingDevTip");
+      const newRecordOverlay = document.getElementById("newRecordOverlay");
+      const newRecordOldScore = document.getElementById("newRecordOldScore");
+      const newRecordBestScore = document.getElementById("newRecordBestScore");
+      const portraitNotice = document.getElementById("portraitNotice");
       versionEl.textContent = GAME_VERSION;
       startBtn.disabled = true;
       startBtn.textContent = "资源加载中 0%";
@@ -1207,7 +1357,7 @@
       let foods = [];
       let score = 0;
       let bestScore = Number(localStorage.getItem("bestScore") || 0);
-
+      let bestScoreAtGameStart = bestScore;
 
       let dir = { x: 1, y: 0 };
       let nextDir = { x: 1, y: 0 };
@@ -1252,6 +1402,9 @@
       let touchStartX = 0;
       let touchStartY = 0;
       let directionChangedThisStep = false;
+      let runProof = null;
+      const gameTimeoutIds = new Set();
+      const gameIntervalIds = new Set();
       bestScoreEl.textContent = bestScore;
 
       // ==================== 初始化 ====================
@@ -1277,7 +1430,101 @@
         return audio;
       }
 
+      function scheduleGameTimeout(callback, delay) {
+        const timeoutId = setTimeout(() => {
+          gameTimeoutIds.delete(timeoutId);
+          callback();
+        }, delay);
+        gameTimeoutIds.add(timeoutId);
+        return timeoutId;
+      }
+
+      function createRunSeed() {
+        if (window.crypto && crypto.getRandomValues) {
+          const values = new Uint32Array(1);
+          crypto.getRandomValues(values);
+          return values[0];
+        }
+        return Math.floor(Math.random() * 0x100000000);
+      }
+
+      function resetRunProof() {
+        runProof = {
+          seed: createRunSeed(),
+          startedAt: Date.now(),
+          endedAt: 0,
+          pausedMs: 0,
+          pauseStartedAt: 0,
+          events: [],
+        };
+      }
+
+      function getRunDurationMs() {
+        if (!runProof) return 0;
+        const endAt = runProof.endedAt || Date.now();
+        const activePauseMs = runProof.pauseStartedAt
+          ? Math.max(0, endAt - runProof.pauseStartedAt)
+          : 0;
+        return Math.max(
+          0,
+          Math.round(
+            endAt - runProof.startedAt - runProof.pausedMs - activePauseMs,
+          ),
+        );
+      }
+
+      function recordRunEvent(type, points = 0, multiplier = 0) {
+        if (!runProof || runProof.endedAt || runProof.events.length >= 5000)
+          return;
+        runProof.events.push({
+          t: getRunDurationMs(),
+          type,
+          m: multiplier,
+          p: points,
+        });
+      }
+
+      function getRunProof() {
+        if (!runProof) return null;
+        const durationMs = getRunDurationMs();
+        const events = runProof.events.map((event) => ({ ...event }));
+        const foodsEaten = events.filter((event) => event.type !== FOOD_BOMB)
+          .length;
+        return {
+          seed: runProof.seed,
+          duration_ms: durationMs,
+          gameTime: Math.round(durationMs / 1000),
+          foods: foodsEaten,
+          boss: events.filter((event) => event.type === FOOD_BOMB).length,
+          coffee: events.filter((event) => event.type === FOOD_SPEED).length,
+          version: String(GAME_VERSION).replace(/^v/i, ""),
+          events,
+        };
+      }
+
+      function clearGameRuntime() {
+        gameTimeoutIds.forEach((timeoutId) => clearTimeout(timeoutId));
+        gameTimeoutIds.clear();
+        gameIntervalIds.forEach((intervalId) => clearInterval(intervalId));
+        gameIntervalIds.clear();
+
+        if (animationId !== null) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+
+        Object.entries(sounds).forEach(([name, sound]) => {
+          if (!sound || name === "bgm") return;
+          try {
+            sound.pause();
+            sound.currentTime = 0;
+          } catch (e) {}
+        });
+      }
+
       function reset() {
+        clearGameRuntime();
+        resetRunProof();
         snake = [{ x: 5, y: 5 }];
         prevSnake = snake.map(copyPoint);
         bodySkins = [];
@@ -1291,9 +1538,9 @@
         moveDelay = speed;
         moveProgress = 1;
         lastMoveTime = performance.now();
+        pulseTime = 0;
 
         score = 0;
-        hasSubmittedThisGame = false;
         gameOver = false;
         gamePaused = false;
         pauseStartTime = 0;
@@ -1316,33 +1563,52 @@
         headCurrentAngle = -Math.PI / 2;
         headTargetAngle = -Math.PI / 2;
         directionChangedThisStep = false;
+        touchStartX = 0;
+        touchStartY = 0;
+        lastStatusUiUpdateTime = 0;
+        currentOvertimeColorState = "";
+        bestScoreAtGameStart = bestScore;
 
         scoreEl.textContent = score;
-        restartBtn.style.display = "none";
+        restartBtn.disabled = false;
+        retryBtn.style.display = "none";
         updateModeStatus(true);
         fillFoods();
 
-        if (!animationId) {
-          animationId = requestAnimationFrame(gameFrame);
-        }
+        animationId = requestAnimationFrame(gameFrame);
       }
 
       async function startGame() {
         if (!assetsLoaded) return;
         if (gameStarted && !gameOver) return;
         startBtn.style.display = "none";
+        retryBtn.style.display = "none";
         startHint.style.display = "none";
         document.body.classList.add("gameActive");
         gameStarted = true;
+        restartBtn.disabled = false;
+        reset();
         playSound(sounds.start);
         requestFullscreenIfPossible();
-        setTimeout(requestFullscreenIfPossible, 80);
-        if (bgm) if (bgm) bgm.play().catch(() => {});
-        reset();
+        scheduleGameTimeout(requestFullscreenIfPossible, 80);
+        if (bgm && musicEnabled) bgm.play().catch(() => {});
       }
 
       function restartGame() {
+        if (!assetsLoaded || !gameStarted) return;
+        if (
+          window.GreedyLeaderboard &&
+          window.GreedyLeaderboard.resetTransientState
+        ) {
+          window.GreedyLeaderboard.resetTransientState();
+        }
+        startBtn.style.display = "none";
+        retryBtn.style.display = "none";
+        startHint.style.display = "none";
+        document.body.classList.add("gameActive");
+        gameStarted = true;
         reset();
+        if (bgm && musicEnabled) bgm.play().catch(() => {});
       }
 
       function toggleMusic() {
@@ -1363,8 +1629,18 @@
 
         if (gamePaused) {
           pauseStartTime = Date.now();
+          if (runProof && !runProof.endedAt) {
+            runProof.pauseStartedAt = pauseStartTime;
+          }
           if (bgm) bgm.pause();
         } else {
+          if (runProof && runProof.pauseStartedAt) {
+            runProof.pausedMs += Math.max(
+              0,
+              Date.now() - runProof.pauseStartedAt,
+            );
+            runProof.pauseStartedAt = 0;
+          }
           lastMoveTime = performance.now();
           if (musicEnabled) if (bgm) bgm.play().catch(() => {});
         }
@@ -1381,22 +1657,22 @@
       }
 
       async function requestFullscreenIfPossible() {
-        if (document.fullscreenElement) return;
-
         try {
-          if (document.fullscreenEnabled) {
+          if (!document.fullscreenElement && document.fullscreenEnabled) {
             await document.documentElement.requestFullscreen();
           }
 
           if (
             screen.orientation &&
             screen.orientation.lock &&
-            window.innerWidth < 900
+            isMobileDevice()
           ) {
-            await screen.orientation.lock("landscape").catch(() => {});
+            await screen.orientation.lock("portrait").catch(() => {});
           }
         } catch (e) {
           console.log("全屏请求被浏览器拒绝", e);
+        } finally {
+          updatePortraitNotice();
         }
       }
 
@@ -1407,10 +1683,40 @@
             await document.exitFullscreen();
           } else {
             await document.documentElement.requestFullscreen();
+            if (
+              screen.orientation &&
+              screen.orientation.lock &&
+              isMobileDevice()
+            ) {
+              await screen.orientation.lock("portrait").catch(() => {});
+            }
           }
         } catch (e) {
           console.log("全屏切换失败", e);
+        } finally {
+          updatePortraitNotice();
         }
+      }
+
+      function isMobileDevice() {
+        const mobileUserAgent = /Android|iPhone|iPad|iPod|Mobile/i.test(
+          navigator.userAgent,
+        );
+        const touchScreen =
+          navigator.maxTouchPoints > 1 &&
+          Math.min(screen.width || innerWidth, screen.height || innerHeight) <
+            1024;
+        return mobileUserAgent || touchScreen;
+      }
+
+      function updatePortraitNotice() {
+        if (!portraitNotice) return;
+        const shouldShow = isMobileDevice() && innerWidth > innerHeight;
+        portraitNotice.style.display = shouldShow ? "flex" : "none";
+        portraitNotice.setAttribute(
+          "aria-hidden",
+          shouldShow ? "false" : "true",
+        );
       }
 
       function updateFullscreenButton() {
@@ -1435,6 +1741,7 @@
 
       bindTap(startBtn, startGame);
       bindTap(restartBtn, restartGame);
+      bindTap(retryBtn, restartGame);
       bindTap(pauseBtn, togglePause);
       bindTap(fullscreenBtn, toggleFullscreen);
       bindTap(musicBtn, toggleMusic);
@@ -1442,6 +1749,7 @@
         elements: {
           leaderboardBtn,
           leaderboardModal,
+          leaderboardCard,
           leaderboardCloseBtn,
           leaderboardList,
           leaderboardToast,
@@ -1449,16 +1757,25 @@
           submitScoreBtn,
           autoSubmitBestScoreCheckbox,
           suppressLeaderboardPopupCheckbox,
+          newRecordOverlay,
+          newRecordOldScore,
+          newRecordBestScore,
         },
         api: {
           getCurrentScore: () => score,
           getBestScore: () => bestScore,
+          getRunProof,
           isGameStarted: () => gameStarted,
           isGameOver: () => gameOver,
           isDeathPending: () => deathPending,
           isGamePaused: () => gamePaused,
           togglePause,
           restartGame,
+          onLeaderboardClosed: () => {
+            if (gameOver && !deathPending) {
+              retryBtn.style.display = "inline-block";
+            }
+          },
         },
       });
 
@@ -1466,15 +1783,34 @@
         fullscreenBtn.style.display = "none";
       }
       document.addEventListener("fullscreenchange", updateFullscreenButton);
+      document.addEventListener("fullscreenchange", updatePortraitNotice);
+      window.addEventListener("resize", updatePortraitNotice, {
+        passive: true,
+      });
+      window.addEventListener("orientationchange", updatePortraitNotice, {
+        passive: true,
+      });
       updateFullscreenButton();
+      updatePortraitNotice();
       updatePauseButton();
 
       document.addEventListener("keydown", (e) => {
         if (isTypingTarget(e.target)) return;
+        if (
+          window.GreedyLeaderboard &&
+          window.GreedyLeaderboard.isInputCaptured &&
+          window.GreedyLeaderboard.isInputCaptured()
+        ) {
+          return;
+        }
         if (e.key === "ArrowUp") setNextDirection(0, -1);
         if (e.key === "ArrowDown") setNextDirection(0, 1);
         if (e.key === "ArrowLeft") setNextDirection(-1, 0);
         if (e.key === "ArrowRight") setNextDirection(1, 0);
+        if ((e.key === "r" || e.key === "R") && !e.repeat) {
+          e.preventDefault();
+          restartGame();
+        }
         if (e.code === "Space" && gameOver) restartGame();
         if (e.key === "p" || e.key === "P") togglePause();
       });
@@ -1530,13 +1866,17 @@
       );
 
       function isTypingTarget(target) {
-        return Boolean(target && target.closest && target.closest("input, textarea, select"));
+        return Boolean(
+          target && target.closest && target.closest("input, textarea, select"),
+        );
       }
 
       function isButtonTouch(e) {
         return Boolean(
           e.target.closest &&
-            e.target.closest("button, input, textarea, select, label, #leaderboardModal"),
+          e.target.closest(
+            "button, input, textarea, select, label, #leaderboardModal, #newRecordOverlay, #portraitNotice",
+          ),
         );
       }
 
@@ -1983,12 +2323,6 @@
       function addScore(value) {
         score += value;
         scoreEl.textContent = score;
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestScoreEl.textContent = bestScore;
-          localStorage.setItem("bestScore", bestScore);
-        }
       }
 
       function startSpeedMode() {
@@ -2102,6 +2436,7 @@
         if (eatenFood && eatenFood.type === FOOD_BOMB) {
           snake.unshift(head);
           snake.pop();
+          recordRunEvent(FOOD_BOMB, 0, 0);
 
           if (isShieldMode()) {
             playSound(sounds.shieldBreak);
@@ -2175,6 +2510,7 @@
             popupFontSize,
             getPopupLabel(FOOD_SPEED),
           );
+          recordRunEvent(FOOD_SPEED, 0, 0);
           fillFoods();
           return;
         }
@@ -2191,6 +2527,7 @@
             popupFontSize,
             getPopupLabel(FOOD_HR),
           );
+          recordRunEvent(FOOD_HR, 0, 0);
           fillFoods();
           return;
         }
@@ -2206,6 +2543,7 @@
             popupFontSize,
             getPopupLabel(FOOD_POT),
           );
+          recordRunEvent(FOOD_POT, 0, 0);
           fillFoods();
           return;
         }
@@ -2221,6 +2559,7 @@
             popupFontSize,
             getPopupLabel(FOOD_DICE),
           );
+          recordRunEvent(FOOD_DICE, 0, 0);
           fillFoods();
           return;
         }
@@ -2237,11 +2576,13 @@
             popupFontSize,
             popupLabelLayoffMode,
           );
+          recordRunEvent(food.type, 0, 0);
           fillFoods();
           return;
         }
 
         const multiplier = getScoreMultiplier();
+        const scoreBeforeEating = score;
 
         if (food.type === FOOD_NORMAL) {
           const point = normalFoodScore * multiplier;
@@ -2346,11 +2687,16 @@
           snake.push(copyPoint(tail));
         }
 
+        recordRunEvent(food.type, score - scoreBeforeEating, multiplier);
         fillFoods();
       }
 
       function startDeath(isBomb = false) {
         if (deathPending || gameOver) return;
+
+        if (runProof && !runProof.endedAt) {
+          runProof.endedAt = Date.now();
+        }
 
         deathPending = true;
         deathStartTime = getGameTime();
@@ -2365,8 +2711,6 @@
         );
         moveProgress = deathFinalMoveProgress;
         bombGameOver = false;
-        restartBtn.style.display = "none";
-        restartBtn.style.opacity = "0";
         updateModeStatus(true); // 死亡瞬间立刻刷新到撞击时刻
         statusUiFrozen = true; // 之后不再刷新状态栏，避免按钮出现后跳到另一个阶段
         playSound(isBomb ? sounds.bossDeath : sounds.death);
@@ -2382,12 +2726,21 @@
         }
         gameOver = true;
         moveProgress = deathFinalMoveProgress;
+        restartBtn.disabled = true;
+        const previousBestScore = bestScore;
+        const isNewRecord = score > bestScoreAtGameStart && score > bestScore;
+        if (isNewRecord) {
+          bestScore = score;
+          bestScoreEl.textContent = bestScore;
+          localStorage.setItem("bestScore", String(bestScore));
+        }
+        retryBtn.style.display = isNewRecord ? "none" : "inline-block";
         // 状态栏保持死亡瞬间，不再刷新。
-        restartBtn.style.display = "inline-block";
-        requestAnimationFrame(() => {
-          restartBtn.style.opacity = "1";
+        window.GreedyLeaderboard.handleGameOver({
+          isNewRecord,
+          previousBestScore,
+          newBestScore: bestScore,
         });
-        window.GreedyLeaderboard.handleGameOver();
       }
 
       function gameOverNow(isBomb = false) {
@@ -2795,29 +3148,45 @@
         updateBuffStatusCell(
           teamStatus,
           isTeamMode(),
+          isSpecialInRefreshPool("dice"),
           "🎲 团建",
           teamModeEndTime,
         );
-        updateBuffStatusCell(hrStatus, isHrMode(), "📉 裁员", hrModeEndTime);
+        updateBuffStatusCell(
+          hrStatus,
+          isHrMode(),
+          isSpecialInRefreshPool("layoff"),
+          "📉 裁员",
+          hrModeEndTime,
+        );
         updateBuffStatusCell(
           shieldStatus,
           isShieldMode(),
+          isSpecialInRefreshPool("pot"),
           "🛡 背锅",
           shieldModeEndTime,
         );
         updateOvertimeBar();
       }
 
-      function updateBuffStatusCell(el, active, label, endTime) {
+      function isSpecialInRefreshPool(rateKey) {
+        const level = Math.min(Math.max(speedLevel, 0), maxSpeedLevel);
+        const rates = stageSpawnRates[level] || stageSpawnRates[0];
+        return Number(rates[rateKey] || 0) > 0;
+      }
+
+      function updateBuffStatusCell(el, active, inPool, label, endTime) {
         if (!el) return;
 
         if (!active) {
           el.classList.remove("active");
-          el.textContent = `${label} --`;
+          el.classList.toggle("inPool", inPool);
+          el.textContent = inPool ? `${label} 进入刷新池` : `${label} --`;
           return;
         }
 
         const remain = Math.max(0, (endTime - getGameTime()) / 1000);
+        el.classList.remove("inPool");
         el.classList.add("active");
         el.textContent = `${label} ${formatRemain(remain)}`;
       }
@@ -3131,6 +3500,9 @@
           offset = (size - drawSize) / 2;
         }
 
+        // 描边固定在基础蛇头尺寸上，并绘制在头像下层。
+        drawHeadOutline(x, y);
+
         if (isMaxSpeedMode()) {
           ctx.save();
           ctx.shadowColor = getRainbowColor();
@@ -3153,6 +3525,26 @@
           drawSize,
           headCurrentAngle,
         );
+      }
+
+      function getHeadOutlineColor() {
+        if (isShieldMode()) return shieldInfoColor;
+        if (isHrMode()) return hrInfoColor;
+        if (isTeamMode()) return teamInfoColor;
+        return getMultiplierColor();
+      }
+
+      function drawHeadOutline(x, y) {
+        const outlineColor = resolveDrawColor(getHeadOutlineColor());
+        ctx.save();
+        ctx.shadowColor = outlineColor;
+        ctx.shadowBlur = foodGlow;
+        ctx.strokeStyle = outlineColor;
+        ctx.lineWidth = foodStrokeWidth;
+        ctx.beginPath();
+        ctx.arc(x + size / 2, y + size / 2, size / 2 + 1, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
       }
 
       function drawBodyPart(p, index, x, y) {
@@ -3263,7 +3655,6 @@
           maxLife: popupLife,
         });
       }
-
 
       // ==================== 联网排行榜：已拆分到 leaderboard.js ====================
 
